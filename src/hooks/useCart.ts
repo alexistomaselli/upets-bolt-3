@@ -66,7 +66,7 @@ export const useCart = () => {
       const updatedCart = await updateCartStorage(newItems);
     notifyCartChange(updatedCart);
     } catch (error) {
-      console.error('Error adding to cart:', error);
+      // Error silencioso
     }
   };
 
@@ -76,7 +76,7 @@ export const useCart = () => {
       const updatedCart = await updateCartStorage(newItems);
     notifyCartChange(updatedCart);
     } catch (error) {
-      console.error('Error removing from cart:', error);
+      // Error silencioso
     }
   };
 

@@ -45,11 +45,8 @@ export const useAuth = () => {
     const initializeAuth = async () => {
       try {
         console.log('🔄 Inicializando autenticación...');
-        
-        // Timeout para evitar loading infinito
         const timeoutId = setTimeout(() => {
           if (mounted) {
-            console.log('⏰ Timeout de autenticación, continuando sin usuario');
             setAuthState(prev => ({
               ...prev,
               loading: false,
@@ -68,7 +65,6 @@ export const useAuth = () => {
         if (!mounted) return;
 
         if (error) {
-          console.error('❌ Error obteniendo sesión:', error);
           setAuthState(prev => ({
             ...prev,
             loading: false,
@@ -78,8 +74,6 @@ export const useAuth = () => {
             roles: []
           }));
           return;
-        }
-
         console.log('✅ Sesión obtenida:', session?.user?.email || 'Sin usuario');
 
         if (session?.user) {
@@ -95,7 +89,6 @@ export const useAuth = () => {
         }));
 
       } catch (error) {
-        console.error('❌ Error inicializando auth:', error);
         if (mounted) {
           setAuthState(prev => ({
             ...prev,
@@ -112,8 +105,6 @@ export const useAuth = () => {
     const loadUserDataAsync = async (user: User) => {
       try {
         console.log('🔄 Cargando datos del usuario en background:', user.email);
-        
-        // Cargar perfil
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('*')
@@ -131,7 +122,6 @@ export const useAuth = () => {
             role_level: r.role_level
           }));
         } catch (rolesError) {
-          console.warn('⚠️ No se pudieron cargar roles:', rolesError);
           roles = [];
         }
 
@@ -143,10 +133,8 @@ export const useAuth = () => {
           }));
         }
 
-        console.log('✅ Datos del usuario cargados:', { profile: !!profile, roles: roles.length });
-        
       } catch (error) {
-        console.warn('⚠️ Error cargando datos del usuario:', error);
+        // Error silencioso, no es crítico
       }
     };
 
@@ -157,8 +145,6 @@ export const useAuth = () => {
       async (event, session) => {
         console.log('🔄 Auth state changed:', event);
         
-        if (!mounted) return;
-
         if (session?.user) {
           loadUserDataAsync(session.user);
         }

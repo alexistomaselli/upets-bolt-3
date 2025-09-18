@@ -9,19 +9,7 @@ const WP_AUTH_METHOD = import.meta.env.VITE_WP_AUTH_METHOD || 'wc_keys';
 
 // Validar configuración
 if (!WC_API_BASE_URL || !WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) {
-  console.warn('⚠️ Variables de entorno de WooCommerce no configuradas completamente. Usando valores por defecto.');
-  console.warn('Verificar:', {
-    WC_API_BASE_URL: !!WC_API_BASE_URL,
-    WC_CONSUMER_KEY: !!WC_CONSUMER_KEY,
-    WC_CONSUMER_SECRET: !!WC_CONSUMER_SECRET
-  });
-} else {
-  console.log('✅ Configuración de WooCommerce cargada:', {
-    baseUrl: WC_API_BASE_URL,
-    hasKey: !!WC_CONSUMER_KEY,
-    hasSecret: !!WC_CONSUMER_SECRET,
-    authMethod: WP_AUTH_METHOD
-  });
+  // WooCommerce no configurado, funcionará con productos placeholder
 }
 
 // Configurar cliente axios
@@ -43,8 +31,6 @@ wcApi.interceptors.request.use((config) => {
       consumer_key: WC_CONSUMER_KEY,
       consumer_secret: WC_CONSUMER_SECRET,
     };
-    
-    console.log('🔑 Autenticación WooCommerce configurada para:', config.url);
   }
   
   return config;
@@ -53,27 +39,10 @@ wcApi.interceptors.request.use((config) => {
 // Interceptor para respuestas
 wcApi.interceptors.response.use(
   (response) => {
-    console.log('✅ Respuesta exitosa de WooCommerce:', response.config.url, `(${response.data.length || 1} items)`);
     return response;
   },
   (error) => {
-    console.error('❌ Error en petición WooCommerce:', {
-      url: error.config?.url,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message
-    });
-    
-    // Mensajes de error más específicos
-    if (error.response?.status === 401) {
-      console.error('🔐 Error de autenticación: Verificar consumer key y secret');
-    } else if (error.response?.status === 403) {
-      console.error('🚫 Error de permisos: El usuario no tiene acceso a la API');
-    } else if (error.message.includes('Network Error') || error.code === 'ERR_NETWORK') {
-      console.error('🌐 Error de red: Verificar CORS y conectividad con shop.afpets.com');
-    }
-    
+    // Error silencioso para evitar spam en consola
     return Promise.reject(error);
   }
 );
@@ -82,12 +51,9 @@ export class WooCommerceAPI {
   // Método para probar la conexión
   static async testConnection(): Promise<boolean> {
     try {
-      console.log('🔍 Probando conexión con WooCommerce en:', WC_API_BASE_URL);
       const response = await wcApi.get('/products', { params: { per_page: 1 } });
-      console.log('✅ Conexión con WooCommerce exitosa. Productos disponibles:', response.data.length);
       return true;
     } catch (error) {
-      console.error('❌ Error de conexión con WooCommerce. Usando productos placeholder.');
       return false;
     }
   }
@@ -101,8 +67,6 @@ export class WooCommerceAPI {
     search?: string;
   }): Promise<Product[]> {
     try {
-      console.log('📦 Obteniendo productos con parámetros:', params);
-      
       // Preparar parámetros de la consulta
       const queryParams: any = {
         per_page: params?.per_page || 12,
@@ -124,29 +88,23 @@ export class WooCommerceAPI {
       const response = await wcApi.get('/products', { params: queryParams });
       const products = response.data;
       
-      console.log(`✅ ${products.length} productos obtenidos de WooCommerce`);
       return products;
     } catch (error) {
-      console.warn('⚠️ No se pudieron obtener productos de WooCommerce. Usando productos placeholder.');
       return [];
     }
   }
 
   static async getProduct(id: number): Promise<Product | null> {
     try {
-      console.log(`📦 Obteniendo producto ID: ${id}`);
       const response = await wcApi.get(`/products/${id}`);
-      console.log('✅ Producto obtenido exitosamente');
       return response.data;
     } catch (error) {
-      console.error(`❌ Error obteniendo producto ${id}:`, error);
       return null;
     }
   }
 
   static async getProductBySlug(slug: string): Promise<Product | null> {
     try {
-      console.log(`📦 Obteniendo producto por slug: ${slug}`);
       const response = await wcApi.get('/products', { 
         params: { 
           slug,
@@ -157,13 +115,11 @@ export class WooCommerceAPI {
       
       const product = response.data[0] || null;
       if (product) {
-        console.log('✅ Producto encontrado por slug');
+        return product;
       } else {
-        console.log('⚠️ No se encontró producto con ese slug');
+        return null;
       }
-      return product;
     } catch (error) {
-      console.error(`❌ Error obteniendo producto por slug ${slug}:`, error);
       return null;
     }
   }
@@ -171,7 +127,6 @@ export class WooCommerceAPI {
   // Categorías
   static async getCategories(): Promise<ProductCategory[]> {
     try {
-      console.log('📂 Obteniendo categorías de WooCommerce...');
       const response = await wcApi.get('/products/categories', {
         params: {
           per_page: 100,
@@ -180,10 +135,8 @@ export class WooCommerceAPI {
       });
       
       const categories = response.data;
-      console.log(`✅ ${categories.length} categorías obtenidas`);
       return categories;
     } catch (error) {
-      console.warn('⚠️ No se pudieron obtener categorías de WooCommerce. Usando categorías placeholder.');
       return [];
     }
   }
@@ -191,12 +144,9 @@ export class WooCommerceAPI {
   // Variaciones de producto
   static async getProductVariations(productId: number) {
     try {
-      console.log(`🔄 Obteniendo variaciones para producto ${productId}`);
       const response = await wcApi.get(`/products/${productId}/variations`);
-      console.log('✅ Variaciones obtenidas');
       return response.data;
     } catch (error) {
-      console.error(`❌ Error obteniendo variaciones del producto ${productId}:`, error);
       return [];
     }
   }
@@ -204,27 +154,18 @@ export class WooCommerceAPI {
   // Órdenes
   static async createOrder(orderData: any): Promise<Order | null> {
     try {
-      console.log('🛒 Creando orden en WooCommerce...', { 
-        items: orderData.line_items?.length || 0,
-        total: orderData.total || 'N/A'
-      });
       const response = await wcApi.post('/orders', orderData);
-      console.log('✅ Orden creada exitosamente en WooCommerce. ID:', response.data.id);
       return response.data;
     } catch (error) {
-      console.error('❌ Error creando orden en WooCommerce:', error);
       throw error;
     }
   }
 
   static async getOrder(id: number): Promise<Order | null> {
     try {
-      console.log(`📋 Obteniendo orden ${id}`);
       const response = await wcApi.get(`/orders/${id}`);
-      console.log('✅ Orden obtenida');
       return response.data;
     } catch (error) {
-      console.error(`❌ Error obteniendo orden ${id}:`, error);
       return null;
     }
   }
@@ -243,10 +184,8 @@ export class WooCommerceAPI {
       cart.total = cart.subtotal + cart.shipping_total + cart.tax_total;
       
       localStorage.setItem('afpets_cart', JSON.stringify(cart));
-      console.log('🛒 Carrito actualizado:', cart.item_count, 'items');
       return cart;
     } catch (error) {
-      console.error('❌ Error actualizando carrito:', error);
       return this.getCartFromStorage();
     }
   }
@@ -263,7 +202,6 @@ export class WooCommerceAPI {
         tax_total: 0
       };
     } catch (error) {
-      console.error('❌ Error obteniendo carrito del localStorage:', error);
       return {
         items: [],
         item_count: 0,
@@ -278,12 +216,11 @@ export class WooCommerceAPI {
 
 // Probar conexión al cargar el módulo
 if (typeof window !== 'undefined' && WC_API_BASE_URL && WC_CONSUMER_KEY) {
-  console.log('🚀 Iniciando prueba de conexión con WooCommerce...');
   WooCommerceAPI.testConnection().then(success => {
     if (success) {
-      console.log('🎉 WooCommerce conectado exitosamente a shop.afpets.com');
+      console.log('✅ WooCommerce conectado');
     } else {
-      console.log('⚠️ WooCommerce no disponible. La tienda funcionará con productos placeholder.');
+      console.log('⚠️ WooCommerce no disponible, usando productos placeholder');
     }
   });
 }
