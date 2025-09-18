@@ -99,7 +99,10 @@ export const useBranches = (companyId?: string) => {
     queryFn: async () => {
       let query = supabase
         .from('branches')
-        .select('*')
+        .select(`
+          *,
+          company:companies(name)
+        `)
         .order('created_at', { ascending: false });
 
       if (companyId) {
