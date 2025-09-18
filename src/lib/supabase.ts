@@ -4,7 +4,9 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('⚠️ Variables de entorno de Supabase no configuradas. Funcionando en modo offline.');
+  console.error('❌ Variables de entorno de Supabase no configuradas');
+  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Configurada' : 'No configurada');
+  console.log('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Configurada' : 'No configurada');
 }
 
 export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
@@ -14,7 +16,6 @@ export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUr
     detectSessionInUrl: true,
     flowType: 'pkce'
   }
-}) : null;
 
 // Tipos para TypeScript
 export type Database = {

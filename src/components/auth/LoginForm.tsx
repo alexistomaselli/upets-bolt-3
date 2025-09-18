@@ -19,6 +19,12 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    
+    if (!supabase) {
+      setError('Supabase no está configurado. Verifica las variables de entorno.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const { data, error } = await signIn(email, password);
@@ -39,17 +45,21 @@ export const LoginForm: React.FC = () => {
             const isCompanyAdmin = rolesData?.some(r => r.role_name === 'company_admin');
             const isBranchAdmin = rolesData?.some(r => r.role_name === 'branch_admin');
             
+            console.log('🔑 Roles verificados:', { isSuperAdmin, isCompanyAdmin, isBranchAdmin });
+            
             // Redirigir según el rol
             if (isSuperAdmin || isCompanyAdmin || isBranchAdmin) {
+              console.log('➡️ Redirigiendo a /admin');
               navigate('/admin', { replace: true });
             } else {
+              console.log('➡️ Redirigiendo a /mi-cuenta');
               navigate('/mi-cuenta', { replace: true });
             }
           } catch (error) {
-            console.warn('Error verificando roles, redirigiendo a mi-cuenta');
+            console.warn('⚠️ Error verificando roles, redirigiendo a mi-cuenta:', error);
             navigate('/mi-cuenta', { replace: true });
           }
-        }, 500);
+        }, 1000); // Aumentar timeout para dar más tiempo
         
         const from = location.state?.from?.pathname;
         if (from) {
@@ -57,6 +67,7 @@ export const LoginForm: React.FC = () => {
         }
       }
     } catch (err) {
+      console.error('💥 Error en login:', err);
       setError('Error inesperado al iniciar sesión');
     } finally {
       setLoading(false);

@@ -45,14 +45,28 @@ export const useAuth = () => {
     const initializeAuth = async () => {
       try {
         console.log('🔄 Inicializando autenticación...');
+        
+        // Timeout de seguridad para evitar carga infinita
         const timeoutId = setTimeout(() => {
-        }
-        )
+          if (mounted) {
+            console.log('⏰ Timeout de autenticación, continuando sin usuario');
+            setAuthState(prev => ({
+              ...prev,
+              loading: false,
+              user: null,
+              session: null,
+              profile: null,
+              roles: []
+            }));
+          }
+        }, 5000);
+        
         const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
 
         if (error) {
+          console.error('❌ Error obteniendo sesión:', error);
           setAuthState(prev => ({
             ...prev,
             loading: false,
@@ -63,6 +77,7 @@ export const useAuth = () => {
           }));
           return;
         }
+        
         console.log('✅ Sesión obtenida:', session?.user?.email || 'Sin usuario');
 
         if (session?.user) {
@@ -79,8 +94,8 @@ export const useAuth = () => {
           }));
         }
 
-
       } catch (error) {
+        console.error('💥 Error en inicialización:', error);
         if (mounted) {
           setAuthState(prev => ({
             ...prev,
@@ -96,13 +111,18 @@ export const useAuth = () => {
 
     const loadUserData = async (user: User) => {
       try {
-        console.log('🔄 Cargando datos del usuario en background:', user.email);
+        console.log('🔄 Cargando datos del usuario:', user.email);
+        
+        // Cargar perfil
         const { data: profile } = await supabase
           .from('user_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single();
 
+        console.log('📋 Perfil cargado:', profile ? 'Sí' : 'No');
+        
+        // Cargar roles
         let roles: UserRole[] = [];
         try {
           const { data: rolesData } = await supabase
@@ -112,7 +132,10 @@ export const useAuth = () => {
             role_name: r.role_name,
             role_level: r.role_level
           }));
+          
+          console.log('🔑 Roles cargados:', roles.length, roles.map(r => r.role_name));
         } catch (rolesError) {
+          console.warn('⚠️ Error cargando roles:', rolesError);
           roles = [];
         }
 
@@ -125,9 +148,12 @@ export const useAuth = () => {
             roles: roles,
             loading: false,
           }));
+          
+          console.log('✅ Estado de auth actualizado completamente');
         }
 
       } catch (error) {
+        console.error('❌ Error cargando datos del usuario:', error);
         if (mounted) {
           setAuthState(prev => ({
             ...prev,
@@ -141,12 +167,26 @@ export const useAuth = () => {
       }
     };
 
+    // Solo inicializar si Supabase está disponible
+    if (!supabase) {
+      console.warn('⚠️ Supabase no configurado, modo offline');
+      setAuthState(prev => ({
+        ...prev,
+        loading: false,
+        user: null,
+        session: null,
+        profile: null,
+        roles: []
+      }));
+      return;
+    }
+    
     initializeAuth();
 
     // Listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state changed:', event);
+        console.log('🔄 Auth state changed:', event, session?.user?.email || 'Sin usuario');
         
         if (session?.user) {
           await loadUserData(session.user);
@@ -175,6 +215,10 @@ export const useAuth = () => {
     phone?: string;
   }) => {
     try {
+      if (!supabase) {
+        return { data: null, error: new Error('Supabase no configurado') };
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -192,6 +236,10 @@ export const useAuth = () => {
 
   const signIn = async (email: string, password: string) => {
     try {
+      if (!supabase) {
+        return { data: null, error: new Error('Supabase no configurado') };
+      }
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -206,6 +254,10 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
+      if (!supabase) {
+        return { error: new Error('Supabase no configurado') };
+      }
+      
       const { error } = await supabase.auth.signOut();
       return { error };
     } catch (error) {
@@ -216,6 +268,7 @@ export const useAuth = () => {
 
   const updateProfile = async (updates: Partial<UserProfile>) => {
     if (!authState.user) return { error: new Error('No user logged in') };
+    if (!supabase) return { error: new Error('Supabase no configurado') };
 
     try {
       const { data, error } = await supabase
@@ -248,7 +301,7 @@ export const useAuth = () => {
   };
 
   const hasPermission = async (resource: string, action: string): Promise<boolean> => {
-    if (!authState.user) return false;
+    if (!authState.user || !supabase) return false;
 
     try {
       const { data, error } = await supabase
