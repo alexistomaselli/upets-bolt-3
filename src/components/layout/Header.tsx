@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ isMenuOpen, setIsMenuOpen }) => {
   const { cart } = useCart();
-  const { user, profile, signOut, loading } = useAuth();
+  const { user, profile, signOut, loading, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
 
   const navigation = [
     { name: 'Inicio', href: '/' },
@@ -87,13 +87,15 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, setIsMenuOpen }) => 
                       Mi Cuenta
                     </Link>
                     
-                    <Link
-                      to="/admin"
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Administración
-                    </Link>
+                    {(isSuperAdmin() || isCompanyAdmin() || isBranchAdmin()) && (
+                      <Link
+                        to="/admin"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <Settings className="h-4 w-4 mr-2" />
+                        Administración
+                      </Link>
+                    )}
                     
                     <hr className="my-2" />
                     
@@ -178,14 +180,16 @@ export const Header: React.FC<HeaderProps> = ({ isMenuOpen, setIsMenuOpen }) => 
                   <User className="h-5 w-5 mr-3" />
                   Mi Cuenta
                 </Link>
-                <Link
-                  to="/admin"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50 transition-colors"
-                >
-                  <Settings className="h-5 w-5 mr-3" />
-                  Administración
-                </Link>
+                {(isSuperAdmin() || isCompanyAdmin() || isBranchAdmin()) && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center px-3 py-2 text-base font-medium text-gray-700 hover:text-green-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <Settings className="h-5 w-5 mr-3" />
+                    Administración
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     handleSignOut();
