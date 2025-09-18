@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Printer, Building, QrCode } from 'lucide-react';
+import { Plus, Printer, Building, QrCode, BarChart3 } from 'lucide-react';
 import { QRCode, CreateQRData, CreatePrintBatchData, AssignToBranchData } from '../../types/qr';
 import { useQRCodes, useCreateQRs, useCreatePrintBatch, useAssignToBranch } from '../../hooks/qr/useQRCodes';
 import { useBranches } from '../../hooks/companies/useCompanies';
