@@ -181,7 +181,7 @@ export const QRManagement: React.FC = () => {
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
                   <strong>Flujo de impresión:</strong> Selecciona QRs inactivos → Crear lote de impresión → 
-                  Los QRs pasan a estado "printed" → Listos para asignar a comercios
+                  Los QRs pasan a estado "printed\" → Listos para asignar a comercios
                 </p>
               </div>
             </div>
