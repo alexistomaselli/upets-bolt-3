@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
@@ -26,14 +27,33 @@ export const LoginForm: React.FC = () => {
         setError(error.message);
       } else if (data?.user) {
         console.log('✅ Login exitoso, redirigiendo...');
-        // Redirigir inmediatamente, los roles se cargarán después
-        const from = location.state?.from?.pathname;
         
+        // Esperar un momento para que se carguen los roles
+        setTimeout(async () => {
+          try {
+            // Verificar si es super admin
+            const { data: rolesData } = await supabase
+              .rpc('get_user_roles', { user_uuid: data.user.id });
+            
+            const isSuperAdmin = rolesData?.some(r => r.role_name === 'super_admin');
+            const isCompanyAdmin = rolesData?.some(r => r.role_name === 'company_admin');
+            const isBranchAdmin = rolesData?.some(r => r.role_name === 'branch_admin');
+            
+            // Redirigir según el rol
+            if (isSuperAdmin || isCompanyAdmin || isBranchAdmin) {
+              navigate('/admin', { replace: true });
+            } else {
+              navigate('/mi-cuenta', { replace: true });
+            }
+          } catch (error) {
+            console.warn('Error verificando roles, redirigiendo a mi-cuenta');
+            navigate('/mi-cuenta', { replace: true });
+          }
+        }, 500);
+        
+        const from = location.state?.from?.pathname;
         if (from) {
           navigate(from, { replace: true });
-        } else {
-          // Por defecto ir a mi-cuenta, el sistema redirigirá a admin si es necesario
-          navigate('/mi-cuenta', { replace: true });
         }
       }
     } catch (err) {
