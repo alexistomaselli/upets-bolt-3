@@ -132,9 +132,6 @@ export const QRManagement: React.FC = () => {
           {activeTab === 'list' && (
             <QRList 
               showActions={true}
-              onSelectQRs={setSelectedQRs}
-              selectedQRs={selectedQRs}
-              showBulkActions={true}
             />
           )}
 

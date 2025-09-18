@@ -11,7 +11,23 @@ export const useQRCodes = (filters?: QRFilters) => {
       
       let query = supabase
         .from('qr_codes')
-        .select('*')
+        .select(`
+          id,
+          code,
+          pet_id,
+          owner_id,
+          qr_type,
+          status,
+          activation_date,
+          expiry_date,
+          scan_count,
+          last_scan_date,
+          last_scan_location,
+          purchase_date,
+          sold_by_branch_id,
+          created_at,
+          updated_at
+        `)
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
@@ -26,9 +42,6 @@ export const useQRCodes = (filters?: QRFilters) => {
       if (filters?.sold_by_branch_id) {
         query = query.eq('sold_by_branch_id', filters.sold_by_branch_id);
       }
-      if (filters?.is_printed !== undefined) {
-        query = query.eq('is_printed', filters.is_printed);
-      }
       if (filters?.search) {
         query = query.or(`code.ilike.%${filters.search}%`);
       }
@@ -40,8 +53,11 @@ export const useQRCodes = (filters?: QRFilters) => {
       }
 
       const { data, error } = await query;
+      
       if (error) throw error;
-      return (data || []) as QRCode[];
+      
+      console.log('✅ QR Codes cargados:', data?.length || 0);
+      return (data || []) as QRCodeType[];
     },
     enabled: !!supabase,
   });

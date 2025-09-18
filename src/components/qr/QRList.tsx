@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, QrCode, Printer, Building } from 'lucide-react';
+import { Plus, Filter, Download, QrCode, Printer, Building, Calendar, Eye } from 'lucide-react';
 import { useQRCodes } from '../../hooks/qr/useQRCodes';
-import { QRCode, QRFilters } from '../../types/qr';
-import { QRCard } from './QRCard';
+import { QRCode as QRCodeType, QRFilters } from '../../types/qr';
 import { Button, Input, EmptyState, LoadingSpinner } from '../ui';
 
 interface QRListProps {
@@ -13,9 +12,6 @@ interface QRListProps {
   onEdit?: (qrCode: QRCode) => void;
   onDelete?: (qrCode: QRCode) => void;
   showActions?: boolean;
-  onSelectQRs?: (selectedIds: string[]) => void;
-  selectedQRs?: string[];
-  showBulkActions?: boolean;
 }
 
 export const QRList: React.FC<QRListProps> = ({
@@ -26,13 +22,10 @@ export const QRList: React.FC<QRListProps> = ({
   onEdit,
   onDelete,
   showActions = true,
-  onSelectQRs,
-  selectedQRs = [],
-  showBulkActions = false,
 }) => {
   const [filters, setFilters] = useState<QRFilters>({
     owner_id: ownerId,
-    assigned_branch_id: assignedBranchId,
+    sold_by_branch_id: assignedBranchId,
   });
 
   const { data: qrCodes, isLoading } = useQRCodes(filters);
@@ -42,26 +35,6 @@ export const QRList: React.FC<QRListProps> = ({
       ...prev,
       [key]: value || undefined,
     }));
-  };
-
-  const handleSelectAll = () => {
-    if (!qrCodes || !onSelectQRs) return;
-    
-    if (selectedQRs.length === qrCodes.length) {
-      onSelectQRs([]);
-    } else {
-      onSelectQRs(qrCodes.map(qr => qr.id));
-    }
-  };
-
-  const handleSelectQR = (qrId: string) => {
-    if (!onSelectQRs) return;
-    
-    if (selectedQRs.includes(qrId)) {
-      onSelectQRs(selectedQRs.filter(id => id !== qrId));
-    } else {
-      onSelectQRs([...selectedQRs, qrId]);
-    }
   };
 
   if (isLoading) {
@@ -84,7 +57,7 @@ export const QRList: React.FC<QRListProps> = ({
         </div>
         {onCreateNew && (
           <Button onClick={onCreateNew} icon={<Plus className="h-4 w-4" />}>
-            Nuevo Lote QR
+            Crear QRs
           </Button>
         )}
       </div>
@@ -125,16 +98,6 @@ export const QRList: React.FC<QRListProps> = ({
             <option value="institutional">Institucional</option>
           </select>
 
-          <select
-            value={filters.is_printed?.toString() || ''}
-            onChange={(e) => handleFilterChange('is_printed', e.target.value)}
-            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-          >
-            <option value="">Todos (impreso/no)</option>
-            <option value="true">Impresos</option>
-            <option value="false">Sin imprimir</option>
-          </select>
-
           <Button variant="outline" icon={<Download className="h-4 w-4" />}>
             Exportar
           </Button>
@@ -146,78 +109,128 @@ export const QRList: React.FC<QRListProps> = ({
         </div>
       </div>
 
-      {/* Bulk Actions */}
-      {showBulkActions && selectedQRs.length > 0 && (
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-blue-800">
-              {selectedQRs.length} QRs seleccionados
-            </span>
-            <div className="flex items-center space-x-2">
-              <button className="px-3 py-1 text-sm bg-white border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors">
-                <Printer className="h-4 w-4 mr-1 inline" />
-                Marcar como impresos
-              </button>
-              <button className="px-3 py-1 text-sm bg-white border border-blue-300 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors">
-                <Building className="h-4 w-4 mr-1 inline" />
-                Asignar a comercio
-              </button>
-              <button 
-                onClick={() => onSelectQRs && onSelectQRs([])}
-                className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800"
-              >
-                Deseleccionar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* QR Codes Grid */}
+      {/* QR Codes Table */}
       {!qrCodes || qrCodes.length === 0 ? (
         <EmptyState
           icon={<QrCode className="h-12 w-12" />}
           title="No hay códigos QR"
-          description="Comienza creando tu primer lote de códigos QR para identificación de mascotas"
+          description="No se encontraron códigos QR con los filtros aplicados"
           action={
             onCreateNew && (
               <Button onClick={onCreateNew} icon={<Plus className="h-4 w-4" />}>
-                Crear Primer Lote
+                Crear QRs
               </Button>
             )
           }
         />
       ) : (
-        <div className="space-y-4">
-          {showBulkActions && (
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={selectedQRs.length === qrCodes.length && qrCodes.length > 0}
-                  onChange={handleSelectAll}
-                  className="rounded text-green-600 mr-3"
-                />
-                <span className="text-sm font-medium text-gray-700">
-                  Seleccionar todos ({qrCodes.length})
-                </span>
-              </label>
-            </div>
-          )}
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {qrCodes.map((qrCode) => (
-              <QRCard
-                key={qrCode.id}
-                qrCode={qrCode}
-                onView={onView}
-                onEdit={onEdit}
-                onDelete={onDelete}
-                showActions={showActions}
-                isSelected={selectedQRs.includes(qrCode.id)}
-                onSelect={showBulkActions ? () => handleSelectQR(qrCode.id) : undefined}
-              />
-            ))}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Código
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Tipo
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Estado
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Escaneos
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Fecha Creación
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Activación
+                  </th>
+                  {showActions && (
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {qrCodes.map((qrCode) => (
+                  <tr key={qrCode.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <QrCode className="h-5 w-5 text-green-600 mr-3" />
+                        <span className="text-sm font-medium text-gray-900">{qrCode.code}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        qrCode.qr_type === 'basic' ? 'bg-gray-100 text-gray-800' :
+                        qrCode.qr_type === 'premium' ? 'bg-blue-100 text-blue-800' :
+                        'bg-purple-100 text-purple-800'
+                      }`}>
+                        {qrCode.qr_type === 'basic' ? 'Básico' : 
+                         qrCode.qr_type === 'premium' ? 'Premium' : 'Institucional'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        qrCode.status === 'active' ? 'bg-green-100 text-green-800' :
+                        qrCode.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
+                        qrCode.status === 'lost' ? 'bg-red-100 text-red-800' :
+                        'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {qrCode.status === 'active' ? 'Activo' :
+                         qrCode.status === 'inactive' ? 'Inactivo' :
+                         qrCode.status === 'lost' ? 'Perdido' :
+                         qrCode.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {qrCode.scan_count || 0}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-2" />
+                        {new Date(qrCode.created_at).toLocaleDateString()}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {qrCode.activation_date ? (
+                        <div className="flex items-center">
+                          <Calendar className="h-4 w-4 mr-2 text-green-600" />
+                          {new Date(qrCode.activation_date).toLocaleDateString()}
+                        </div>
+                      ) : (
+                        <span className="text-gray-400">Sin activar</span>
+                      )}
+                    </td>
+                    {showActions && (
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <div className="flex items-center space-x-2">
+                          {onView && (
+                            <button
+                              onClick={() => onView(qrCode)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                          )}
+                          {onEdit && (
+                            <button
+                              onClick={() => onEdit(qrCode)}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              Editar
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
