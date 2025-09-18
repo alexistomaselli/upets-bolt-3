@@ -13,7 +13,7 @@ export const LoginForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { signIn, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
+  const { signIn } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,46 +31,27 @@ export const LoginForm: React.FC = () => {
       
       if (error) {
         setError(error.message);
+        setLoading(false);
       } else if (data?.user) {
         console.log('✅ Login exitoso, redirigiendo...');
         
-        // Esperar un momento para que se carguen los roles
-        setTimeout(async () => {
-          try {
-            // Verificar si es super admin
-            const { data: rolesData } = await supabase
-              .rpc('get_user_roles', { user_uuid: data.user.id });
-            
-            const isSuperAdmin = rolesData?.some(r => r.role_name === 'super_admin');
-            const isCompanyAdmin = rolesData?.some(r => r.role_name === 'company_admin');
-            const isBranchAdmin = rolesData?.some(r => r.role_name === 'branch_admin');
-            
-            console.log('🔑 Roles verificados:', { isSuperAdmin, isCompanyAdmin, isBranchAdmin });
-            
-            // Redirigir según el rol
-            if (isSuperAdmin || isCompanyAdmin || isBranchAdmin) {
-              console.log('➡️ Redirigiendo a /admin');
-              navigate('/admin', { replace: true });
-            } else {
-              console.log('➡️ Redirigiendo a /mi-cuenta');
-              navigate('/mi-cuenta', { replace: true });
-            }
-          } catch (error) {
-            console.warn('⚠️ Error verificando roles, redirigiendo a mi-cuenta:', error);
-            navigate('/mi-cuenta', { replace: true });
-          }
-        }, 1000); // Aumentar timeout para dar más tiempo
-        
+        // Redirigir inmediatamente - el useAuth se encargará de cargar los roles
         const from = location.state?.from?.pathname;
         if (from) {
           navigate(from, { replace: true });
+        } else {
+          // Redirigir a mi-cuenta por defecto, el useAuth redirigirá a /admin si es admin
+          navigate('/mi-cuenta', { replace: true });
         }
+        
+        setLoading(false);
       }
     } catch (err) {
       console.error('💥 Error en login:', err);
       setError('Error inesperado al iniciar sesión');
-    } finally {
       setLoading(false);
+    } finally {
+      // setLoading(false); - Movido arriba para cada caso
     }
   };
 

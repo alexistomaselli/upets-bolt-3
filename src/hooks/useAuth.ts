@@ -44,12 +44,9 @@ export const useAuth = () => {
 
     const initializeAuth = async () => {
       try {
-        console.log('🔄 Inicializando autenticación...');
-        
         // Timeout de seguridad para evitar carga infinita
         const timeoutId = setTimeout(() => {
           if (mounted) {
-            console.log('⏰ Timeout de autenticación, continuando sin usuario');
             setAuthState(prev => ({
               ...prev,
               loading: false,
@@ -59,14 +56,13 @@ export const useAuth = () => {
               roles: []
             }));
           }
-        }, 5000);
+        }, 3000); // Reducir timeout
         
         const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
 
         if (error) {
-          console.error('❌ Error obteniendo sesión:', error);
           setAuthState(prev => ({
             ...prev,
             loading: false,
@@ -78,7 +74,6 @@ export const useAuth = () => {
           return;
         }
         
-        console.log('✅ Sesión obtenida:', session?.user?.email || 'Sin usuario');
 
         if (session?.user) {
           // Cargar datos del usuario de forma bloqueante para evitar flash
@@ -95,7 +90,6 @@ export const useAuth = () => {
         }
 
       } catch (error) {
-        console.error('💥 Error en inicialización:', error);
         if (mounted) {
           setAuthState(prev => ({
             ...prev,
@@ -111,8 +105,6 @@ export const useAuth = () => {
 
     const loadUserData = async (user: User) => {
       try {
-        console.log('🔄 Cargando datos del usuario:', user.email);
-        
         // Cargar perfil
         const { data: profile } = await supabase
           .from('user_profiles')
@@ -120,8 +112,6 @@ export const useAuth = () => {
           .eq('user_id', user.id)
           .single();
 
-        console.log('📋 Perfil cargado:', profile ? 'Sí' : 'No');
-        
         // Cargar roles
         let roles: UserRole[] = [];
         try {
@@ -133,9 +123,7 @@ export const useAuth = () => {
             role_level: r.role_level
           }));
           
-          console.log('🔑 Roles cargados:', roles.length, roles.map(r => r.role_name));
         } catch (rolesError) {
-          console.warn('⚠️ Error cargando roles:', rolesError);
           roles = [];
         }
 
@@ -149,11 +137,9 @@ export const useAuth = () => {
             loading: false,
           }));
           
-          console.log('✅ Estado de auth actualizado completamente');
         }
 
       } catch (error) {
-        console.error('❌ Error cargando datos del usuario:', error);
         if (mounted) {
           setAuthState(prev => ({
             ...prev,

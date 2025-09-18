@@ -126,7 +126,11 @@ const AppContent = ({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: boolean, setIsM
                   </div>
                 </div>
               ) : (
-                <CustomerDashboard />
+                user && (isSuperAdmin() || isCompanyAdmin() || isBranchAdmin()) ? (
+                  <AdminDashboard />
+                ) : (
+                  <CustomerDashboard />
+                )
               )}
             </ProtectedRoute>
           } />
