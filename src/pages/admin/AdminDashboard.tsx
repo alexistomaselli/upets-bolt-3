@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, Shield, Building, BarChart3, Settings, Store, QrCode } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { CompanyManagement } from '../../components/companies/CompanyManagement';
-// import { QRManagement } from '../../components/qr/QRManagement';
+import { QRList } from '../../components/qr';
 
 export const AdminDashboard: React.FC = () => {
   const { user, profile, roles, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();

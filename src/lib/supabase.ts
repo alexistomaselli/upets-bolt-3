@@ -4,19 +4,16 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('❌ Variables de entorno de Supabase no configuradas');
-  console.log('VITE_SUPABASE_URL:', supabaseUrl ? 'Configurada' : 'No configurada');
-  console.log('VITE_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'Configurada' : 'No configurada');
+  throw new Error('❌ Variables de entorno de Supabase no configuradas. VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas.');
 }
 
-export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
     flowType: 'pkce'
   }
-}) : undefined;
 
 // Tipos para TypeScript
 export type Database = {
