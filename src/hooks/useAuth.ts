@@ -74,6 +74,7 @@ export const useAuth = () => {
             roles: []
           }));
           return;
+        }
         console.log('✅ Sesión obtenida:', session?.user?.email || 'Sin usuario');
 
         if (session?.user) {
