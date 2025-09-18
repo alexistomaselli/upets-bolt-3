@@ -1,5 +1,5 @@
 import React from 'react';
-import { QrCode, Eye, MapPin, TrendingUp, Calendar } from 'lucide-react';
+import { QrCode, Eye, MapPin, TrendingUp, Calendar, Printer, Building } from 'lucide-react';
 import { useQRStats } from '../../hooks/qr/useQRCodes';
 import { Card, Badge, LoadingSpinner } from '../ui';
 
@@ -33,32 +33,32 @@ export const QRStats: React.FC<QRStatsProps> = ({ ownerId, branchId }) => {
       bgColor: 'bg-blue-100',
     },
     {
+      title: 'QRs Impresos',
+      value: stats.printed_qrs,
+      icon: Printer,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-100',
+    },
+    {
+      title: 'QRs Asignados',
+      value: stats.assigned_qrs,
+      icon: Building,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-100',
+    },
+    {
       title: 'QRs Activos',
       value: stats.active_qrs,
       icon: TrendingUp,
       color: 'text-green-600',
       bgColor: 'bg-green-100',
     },
-    {
-      title: 'Total Escaneos',
-      value: stats.total_scans,
-      icon: Eye,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-100',
-    },
-    {
-      title: 'Mascotas Encontradas',
-      value: stats.pets_found,
-      icon: MapPin,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-100',
-    },
   ];
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((stat, index) => (
           <Card key={index}>
             <div className="flex items-center">
@@ -72,6 +72,45 @@ export const QRStats: React.FC<QRStatsProps> = ({ ownerId, branchId }) => {
             </div>
           </Card>
         ))}
+      </div>
+
+      {/* Additional Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-purple-100">
+              <Eye className="h-6 w-6 text-purple-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Total Escaneos</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.total_scans}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-green-100">
+              <MapPin className="h-6 w-6 text-green-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Mascotas Encontradas</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pets_found}</p>
+            </div>
+          </div>
+        </Card>
+        
+        <Card>
+          <div className="flex items-center">
+            <div className="p-3 rounded-full bg-yellow-100">
+              <TrendingUp className="h-6 w-6 text-yellow-600" />
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-600">Suscripciones Activas</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.active_subscriptions}</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
       {/* Recent Scans */}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import { QRCode, QRScan, QRBatch, QRStats, QRFilters, CreateQRBatchData, UpdateQRData } from '../../types/qr';
+import { QRCode, QRScan, PrintBatch, QRStats, QRFilters, CreateQRData, CreatePrintBatchData, AssignToBranchData, UpdateQRData } from '../../types/qr';
 
 export const useQRCodes = (filters?: QRFilters) => {
   return useQuery({
@@ -13,7 +13,7 @@ export const useQRCodes = (filters?: QRFilters) => {
           *,
           pet:pets(*),
           owner:user_profiles(*),
-          branch:branches(*)
+          assigned_branch:branches(*)
         `)
         .order('created_at', { ascending: false });
 
@@ -26,8 +26,11 @@ export const useQRCodes = (filters?: QRFilters) => {
       if (filters?.owner_id) {
         query = query.eq('owner_id', filters.owner_id);
       }
-      if (filters?.branch_id) {
-        query = query.eq('sold_by_branch_id', filters.branch_id);
+      if (filters?.assigned_branch_id) {
+        query = query.eq('assigned_branch_id', filters.assigned_branch_id);
+      }
+      if (filters?.is_printed !== undefined) {
+        query = query.eq('is_printed', filters.is_printed);
       }
       if (filters?.search) {
         query = query.or(`code.ilike.%${filters.search}%`);
@@ -56,7 +59,7 @@ export const useQRCode = (id: string) => {
           *,
           pet:pets(*),
           owner:user_profiles(*),
-          branch:branches(*),
+          assigned_branch:branches(*),
           scans:qr_scans(*)
         `)
         .eq('id', id)
@@ -90,64 +93,119 @@ export const useQRCodeByCode = (code: string) => {
   });
 };
 
-export const useCreateQRBatch = () => {
+export const useCreateQRs = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (batchData: CreateQRBatchData) => {
-      // Crear el batch
-      const { data: batch, error: batchError } = await supabase
-        .from('qr_batches')
-        .insert([{
-          batch_number: `BATCH-${Date.now()}`,
-          quantity: batchData.quantity,
-          qr_type: batchData.qr_type,
-          price_per_unit: batchData.price_per_unit,
-          total_amount: batchData.quantity * batchData.price_per_unit,
-          branch_id: batchData.branch_id,
-          notes: batchData.notes,
-          status: 'pending'
-        }])
-        .select()
-        .single();
-
-      if (batchError) throw batchError;
-
-      // Generar códigos QR
+    mutationFn: async (qrData: CreateQRData) => {
+      // Generar códigos QR únicos
       const qrCodes = [];
-      for (let i = 0; i < batchData.quantity; i++) {
+      for (let i = 0; i < qrData.quantity; i++) {
         const code = `QR${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
         qrCodes.push({
           code,
-          qr_type: batchData.qr_type,
-          purchase_price: batchData.price_per_unit,
-          sold_by_branch_id: batchData.branch_id,
+          qr_type: qrData.qr_type,
           status: 'inactive',
-          metadata: { batch_id: batch.id }
+          is_printed: false,
+          metadata: { 
+            creation_notes: qrData.notes,
+            created_by_admin: true
+          }
         });
       }
 
-      const { data: createdQRs, error: qrError } = await supabase
+      const { data, error } = await supabase
         .from('qr_codes')
         .insert(qrCodes)
         .select();
 
-      if (qrError) throw qrError;
-
-      // Actualizar el batch como generado
-      await supabase
-        .from('qr_batches')
-        .update({ 
-          status: 'generated', 
-          generated_at: new Date().toISOString() 
-        })
-        .eq('id', batch.id);
-
-      return { batch, qr_codes: createdQRs };
+      if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
-      queryClient.invalidateQueries({ queryKey: ['qr-batches'] });
+    },
+  });
+};
+
+export const useCreatePrintBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (printData: CreatePrintBatchData) => {
+      const batchNumber = `PRINT-${Date.now()}`;
+      
+      // Actualizar QRs a estado "printed"
+      const { data, error } = await supabase
+        .from('qr_codes')
+        .update({
+          is_printed: true,
+          print_batch_number: batchNumber,
+          printed_at: new Date().toISOString(),
+          status: 'printed',
+          metadata: supabase.raw(`metadata || '{"print_notes": "${printData.notes || ''}"}'::jsonb`)
+        })
+        .in('id', printData.qr_ids)
+        .select();
+
+      if (error) throw error;
+      return { batch_number: batchNumber, qr_codes: data };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+    },
+  });
+};
+
+export const useAssignToBranch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (assignData: AssignToBranchData) => {
+      // Asignar QRs al comercio
+      const { data, error } = await supabase
+        .from('qr_codes')
+        .update({
+          assigned_branch_id: assignData.branch_id,
+          assigned_at: new Date().toISOString(),
+          status: 'assigned',
+          metadata: supabase.raw(`metadata || '{"assignment_notes": "${assignData.notes || ''}"}'::jsonb`)
+        })
+        .in('id', assignData.qr_ids)
+        .select(`
+          *,
+          assigned_branch:branches(*)
+        `);
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+    },
+  });
+};
+
+export const useMarkAsPrinted = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (qrIds: string[]) => {
+      const { data, error } = await supabase
+        .from('qr_codes')
+        .update({
+          is_printed: true,
+          printed_at: new Date().toISOString(),
+          status: 'printed'
+        })
+        .in('id', qrIds)
+        .select();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
     },
   });
 };
@@ -275,38 +333,17 @@ export const useQRStats = (filters?: {
 
       const stats: QRStats = {
         total_qrs: qrCodes.length,
+        printed_qrs: qrCodes.filter(qr => qr.is_printed).length,
+        assigned_qrs: qrCodes.filter(qr => qr.assigned_branch_id).length,
         active_qrs: qrCodes.filter(qr => qr.status === 'active').length,
         inactive_qrs: qrCodes.filter(qr => qr.status === 'inactive').length,
         total_scans: qrCodes.reduce((sum, qr) => sum + qr.scan_count, 0),
         pets_found: qrCodes.filter(qr => qr.status === 'found').length,
+        active_subscriptions: 0, // TODO: Implementar cuando tengamos subscriptions
         recent_scans: recentScans || []
       };
 
       return stats;
-    },
-  });
-};
-
-export const useQRBatches = (branchId?: string) => {
-  return useQuery({
-    queryKey: ['qr-batches', branchId],
-    queryFn: async () => {
-      let query = supabase
-        .from('qr_batches')
-        .select(`
-          *,
-          branch:branches(*),
-          created_by_user:user_profiles(*)
-        `)
-        .order('created_at', { ascending: false });
-
-      if (branchId) {
-        query = query.eq('branch_id', branchId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as QRBatch[];
     },
   });
 };

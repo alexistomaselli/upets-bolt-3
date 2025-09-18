@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, Shield, Building, BarChart3, Settings, Store, QrCode } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { CompanyManagement } from '../../components/companies/CompanyManagement';
-import { QRBatchManager } from '../../components/qr/QRBatchManager';
+import { QRManagement } from '../../components/qr/QRManagement';
 
 export const AdminDashboard: React.FC = () => {
   const { user, profile, roles, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
@@ -18,7 +18,7 @@ export const AdminDashboard: React.FC = () => {
   const quickActions = [
     { name: 'Gestionar Usuarios', icon: Users, href: '/admin/users', color: 'bg-blue-600' },
     { name: 'Comercios', icon: Store, action: 'companies', color: 'bg-green-600' },
-    { name: 'Lotes QR', icon: QrCode, action: 'qr-batches', color: 'bg-purple-600' },
+    { name: 'Gestión QR', icon: QrCode, action: 'qr-management', color: 'bg-purple-600' },
     { name: 'Configurar Roles', icon: Shield, href: '/admin/roles', color: 'bg-green-600' },
     { name: 'Configuración', icon: Settings, href: '/admin/settings', color: 'bg-orange-600' },
   ];
@@ -59,9 +59,9 @@ export const AdminDashboard: React.FC = () => {
         <CompanyManagement />
       )}
 
-      {activeSection === 'qr-batches' && (
+      {activeSection === 'qr-management' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <QRBatchManager />
+          <QRManagement />
         </div>
       )}
 

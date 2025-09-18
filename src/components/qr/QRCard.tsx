@@ -9,6 +9,8 @@ interface QRCardProps {
   onEdit?: (qrCode: QRCode) => void;
   onDelete?: (qrCode: QRCode) => void;
   showActions?: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
 export const QRCard: React.FC<QRCardProps> = ({
@@ -17,11 +19,15 @@ export const QRCard: React.FC<QRCardProps> = ({
   onEdit,
   onDelete,
   showActions = true,
+  isSelected = false,
+  onSelect,
 }) => {
   const getStatusColor = (status: QRStatus) => {
     switch (status) {
       case 'active': return 'success';
       case 'inactive': return 'default';
+      case 'printed': return 'info';
+      case 'assigned': return 'warning';
       case 'lost': return 'danger';
       case 'found': return 'success';
       case 'expired': return 'warning';
@@ -33,6 +39,8 @@ export const QRCard: React.FC<QRCardProps> = ({
     switch (status) {
       case 'active': return 'Activo';
       case 'inactive': return 'Inactivo';
+      case 'printed': return 'Impreso';
+      case 'assigned': return 'Asignado';
       case 'lost': return 'Perdido';
       case 'found': return 'Encontrado';
       case 'expired': return 'Expirado';
@@ -59,9 +67,20 @@ export const QRCard: React.FC<QRCardProps> = ({
   };
 
   return (
-    <Card hover className="relative">
+    <Card hover className={`relative ${isSelected ? 'ring-2 ring-green-500 bg-green-50' : ''}`}>
+      {onSelect && (
+        <div className="absolute top-4 left-4">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={onSelect}
+            className="rounded text-green-600"
+          />
+        </div>
+      )}
+      
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center space-x-3">
+        <div className={`flex items-center space-x-3 ${onSelect ? 'ml-8' : ''}`}>
           <div className="bg-green-100 p-2 rounded-lg">
             <QrCode className="h-6 w-6 text-green-600" />
           </div>
@@ -126,6 +145,20 @@ export const QRCard: React.FC<QRCardProps> = ({
           </div>
         )}
 
+        {qrCode.is_printed && (
+          <div className="flex items-center text-sm text-gray-600">
+            <Calendar className="h-4 w-4 mr-2" />
+            <span>Impreso: {qrCode.printed_at ? new Date(qrCode.printed_at).toLocaleDateString() : 'Sí'}</span>
+          </div>
+        )}
+
+        {qrCode.assigned_branch && (
+          <div className="flex items-center text-sm text-gray-600">
+            <MapPin className="h-4 w-4 mr-2" />
+            <span>Comercio: <strong>{qrCode.assigned_branch.name}</strong></span>
+          </div>
+        )}
+
         <div className="flex items-center text-sm text-gray-600">
           <Calendar className="h-4 w-4 mr-2" />
           <span>Creado: {new Date(qrCode.created_at).toLocaleDateString()}</span>
@@ -149,9 +182,9 @@ export const QRCard: React.FC<QRCardProps> = ({
           <span className="text-sm text-gray-600">
             {qrCode.scan_count} escaneos
           </span>
-          {qrCode.purchase_price && (
-            <span className="text-sm font-medium text-green-600">
-              ${qrCode.purchase_price}
+          {qrCode.print_batch_number && (
+            <span className="text-xs text-gray-500">
+              Lote: {qrCode.print_batch_number}
             </span>
           )}
         </div>
