@@ -97,12 +97,11 @@ export const useBranches = (companyId?: string) => {
   return useQuery({
     queryKey: ['branches', companyId],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       let query = supabase
         .from('branches')
-        .select(`
-          *,
-          company:companies(name)
-        `)
+        .select('id, company_id, name, code, email, phone, address, city, state, postal_code, status, created_at')
         .order('created_at', { ascending: false });
 
       if (companyId) {
@@ -113,6 +112,7 @@ export const useBranches = (companyId?: string) => {
       if (error) throw error;
       return data as Branch[];
     },
+    enabled: !!supabase,
   });
 };
 

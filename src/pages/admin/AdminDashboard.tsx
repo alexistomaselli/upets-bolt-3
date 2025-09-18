@@ -2,7 +2,7 @@ import React from 'react';
 import { Users, Shield, Building, BarChart3, Settings, Store, QrCode } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { CompanyManagement } from '../../components/companies/CompanyManagement';
-import { QRManagement } from '../../components/qr/QRManagement';
+// import { QRManagement } from '../../components/qr/QRManagement';
 
 export const AdminDashboard: React.FC = () => {
   const { user, profile, roles, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
@@ -61,7 +61,13 @@ export const AdminDashboard: React.FC = () => {
 
       {activeSection === 'qr-management' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <QRManagement />
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <QrCode className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Módulo QR en desarrollo</h3>
+            <p className="text-gray-600">
+              El módulo de gestión de QRs está siendo optimizado para evitar problemas de base de datos.
+            </p>
+          </div>
         </div>
       )}
 
