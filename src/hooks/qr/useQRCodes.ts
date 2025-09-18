@@ -7,14 +7,10 @@ export const useQRCodes = (filters?: QRFilters) => {
   return useQuery({
     queryKey: ['qr-codes', filters],
     queryFn: async () => {
-      let query = supabase
+      // Primero obtenemos los QR codes básicos
+      const { data: qrData, error: qrError } = await supabase
         .from('qr_codes')
-        .select(`
-          *,
-          pet:pets(*),
-          owner:user_profiles(*),
-          assigned_branch:branches(*)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
@@ -43,8 +39,49 @@ export const useQRCodes = (filters?: QRFilters) => {
       }
 
       const { data, error } = await query;
-      if (error) throw error;
-      return data as QRCode[];
+      if (qrError) throw qrError;
+      if (!qrData) return [];
+
+      // Luego obtenemos los datos relacionados por separado
+      const qrCodesWithRelations = await Promise.all(
+        qrData.map(async (qr) => {
+          const relations: any = { ...qr };
+
+          // Obtener pet si existe
+          if (qr.pet_id) {
+            const { data: petData } = await supabase
+              .from('pets')
+              .select('*')
+              .eq('id', qr.pet_id)
+              .single();
+            relations.pet = petData;
+          }
+
+          // Obtener owner profile si existe
+          if (qr.owner_id) {
+            const { data: ownerData } = await supabase
+              .from('user_profiles')
+              .select('*')
+              .eq('user_id', qr.owner_id)
+              .single();
+            relations.owner = ownerData;
+          }
+
+          // Obtener branch si existe
+          if (qr.sold_by_branch_id) {
+            const { data: branchData } = await supabase
+              .from('branches')
+              .select('*')
+              .eq('id', qr.sold_by_branch_id)
+              .single();
+            relations.assigned_branch = branchData;
+          }
+
+          return relations;
+        })
+      );
+
+      return qrCodesWithRelations as QRCode[];
     },
   });
 };
