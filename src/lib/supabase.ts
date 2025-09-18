@@ -16,6 +16,8 @@ export const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUr
     detectSessionInUrl: true,
     flowType: 'pkce'
   }
+}
+)
 
 // Tipos para TypeScript
 export type Database = {
