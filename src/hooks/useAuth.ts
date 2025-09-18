@@ -46,6 +46,8 @@ export const useAuth = () => {
       try {
         console.log('🔄 Inicializando autenticación...');
         const timeoutId = setTimeout(() => {
+        }
+        )
         const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
