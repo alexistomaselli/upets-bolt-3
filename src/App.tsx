@@ -19,6 +19,7 @@ import { RoadmapPage } from './pages/RoadmapPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { CustomerDashboard } from './pages/CustomerDashboard';
 import { DebugAuth } from './components/DebugAuth';
+import { SupabaseDiagnostic } from './components/SupabaseDiagnostic';
 
 const queryClient = new QueryClient();
 
@@ -154,6 +155,9 @@ const AppContent = ({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: boolean, setIsM
       </main>
       
       {!isAuthRoute && <Footer />}
+      
+      {/* Diagnóstico de Supabase - solo en desarrollo */}
+      {process.env.NODE_ENV === 'development' && <SupabaseDiagnostic />}
     </div>
   );
 };
