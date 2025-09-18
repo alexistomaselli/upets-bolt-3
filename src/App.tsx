@@ -157,7 +157,7 @@ const AppContent = ({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: boolean, setIsM
       {!isAuthRoute && <Footer />}
       
       {/* Diagnóstico de Supabase - solo en desarrollo */}
-      {process.env.NODE_ENV === 'development' && <SupabaseDiagnostic />}
+      {/*process.env.NODE_ENV === 'development' && <SupabaseDiagnostic />*/}
     </div>
   );
 };
