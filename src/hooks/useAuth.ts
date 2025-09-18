@@ -46,23 +46,9 @@ export const useAuth = () => {
       try {
         console.log('🔄 Inicializando autenticación...');
         const timeoutId = setTimeout(() => {
-          if (mounted) {
-            setAuthState(prev => ({
-              ...prev,
-              loading: false,
-              user: null,
-              session: null,
-              profile: null,
-              roles: []
-            }));
-          }
-        }, 3000); // 3 segundos máximo
-
         const { data: { session }, error } = await supabase.auth.getSession();
         
         clearTimeout(timeoutId);
-        
-        if (!mounted) return;
 
         if (error) {
           setAuthState(prev => ({
@@ -78,16 +64,19 @@ export const useAuth = () => {
         console.log('✅ Sesión obtenida:', session?.user?.email || 'Sin usuario');
 
         if (session?.user) {
-          // Cargar datos del usuario de forma no bloqueante
-          loadUserDataAsync(session.user);
+          // Cargar datos del usuario de forma bloqueante para evitar flash
+          await loadUserData(session.user);
+        } else {
+          setAuthState(prev => ({
+            ...prev,
+            session,
+            user: null,
+            loading: false,
+            profile: null,
+            roles: []
+          }));
         }
 
-        setAuthState(prev => ({
-          ...prev,
-          session,
-          user: session?.user || null,
-          loading: false,
-        }));
 
       } catch (error) {
         if (mounted) {
@@ -103,7 +92,7 @@ export const useAuth = () => {
       }
     };
 
-    const loadUserDataAsync = async (user: User) => {
+    const loadUserData = async (user: User) => {
       try {
         console.log('🔄 Cargando datos del usuario en background:', user.email);
         const { data: profile } = await supabase
@@ -112,7 +101,6 @@ export const useAuth = () => {
           .eq('user_id', user.id)
           .single();
 
-        // Cargar roles de forma simple
         let roles: UserRole[] = [];
         try {
           const { data: rolesData } = await supabase
@@ -129,13 +117,25 @@ export const useAuth = () => {
         if (mounted) {
           setAuthState(prev => ({
             ...prev,
+            session: prev.session,
+            user: user,
             profile: profile || null,
             roles: roles,
+            loading: false,
           }));
         }
 
       } catch (error) {
-        // Error silencioso, no es crítico
+        if (mounted) {
+          setAuthState(prev => ({
+            ...prev,
+            session: prev.session,
+            user: user,
+            profile: null,
+            roles: [],
+            loading: false,
+          }));
+        }
       }
     };
 
@@ -147,16 +147,17 @@ export const useAuth = () => {
         console.log('🔄 Auth state changed:', event);
         
         if (session?.user) {
-          loadUserDataAsync(session.user);
+          await loadUserData(session.user);
+        } else {
+          setAuthState(prev => ({
+            ...prev,
+            session,
+            user: null,
+            profile: null,
+            roles: [],
+            loading: false,
+          }));
         }
-        
-        setAuthState(prev => ({
-          ...prev,
-          session,
-          user: session?.user || null,
-          profile: session?.user ? prev.profile : null,
-          roles: session?.user ? prev.roles : [],
-        }));
       }
     );
 

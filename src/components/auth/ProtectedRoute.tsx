@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { LoadingSpinner } from '../ui';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -21,12 +22,12 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { user, loading, hasRole, hasMinimumRole, hasPermission } = useAuth();
   const location = useLocation();
 
-  // Mostrar loading mientras se verifica la autenticación
-  if (loading) {
+  // Mostrar loading mientras se verifica la autenticación O mientras se cargan los roles
+  if (loading || (user && !hasRole('customer') && !hasRole('super_admin') && !hasRole('company_admin') && !hasRole('branch_admin'))) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <LoadingSpinner size="xl" className="mx-auto mb-4" />
           <p className="text-gray-600">Verificando acceso...</p>
         </div>
       </div>
