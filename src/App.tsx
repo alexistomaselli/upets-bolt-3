@@ -55,7 +55,7 @@ function App() {
 // Componente interno que tiene acceso al contexto del Router
 const AppContent = ({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: boolean, setIsMenuOpen: (isOpen: boolean) => void }) => {
   const location = useLocation();
-  const { user, loading } = useAuth();
+  const { user, loading, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
   const path = location.pathname;
   
   // Rutas que no necesitan header/footer
