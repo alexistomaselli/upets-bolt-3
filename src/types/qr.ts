@@ -10,18 +10,12 @@ export interface QRCode {
   last_scan_date: string | null;
   last_scan_location: string | null;
   
-  // Campos de impresión
   is_printed: boolean;
-  print_batch_number: string | null;
-  printed_at: string | null;
+  first_printed_at: string | null;
+  last_printed_at: string | null;
+  print_count: number;
   
-  // Campos de asignación a comercios
   sold_by_branch_id: string | null;
-  assigned_at: string | null;
-  
-  // Campos de suscripción
-  subscription_id: string | null;
-  subscription_start_date: string | null;
   
   metadata: Record<string, any>;
   created_at: string;
@@ -32,7 +26,7 @@ export interface QRCode {
   user_profiles?: { first_name: string | null; last_name: string | null; email: string };
   branches?: { name: string; city: string | null; company_id: string; companies: { name: string } };
   scans?: QRScan[];
-  subscription?: Subscription;
+  print_history?: QRPrintHistory[];
 }
 
 export interface QRPrintHistory {

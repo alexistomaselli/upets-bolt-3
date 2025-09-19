@@ -24,6 +24,10 @@ export const useQRCodes = (filters?: QRFilters) => {
           last_scan_location,
           purchase_date,
           sold_by_branch_id,
+          is_printed,
+          first_printed_at,
+          last_printed_at,
+          print_count,
           created_at,
           updated_at
         `)
@@ -46,6 +50,9 @@ export const useQRCodes = (filters?: QRFilters) => {
       }
       if (filters?.date_to) {
         query = query.lte('created_at', filters.date_to);
+      }
+      if (filters?.is_printed !== undefined) {
+        query = query.eq('is_printed', filters.is_printed);
       }
 
       const { data, error } = await query;
@@ -355,5 +362,56 @@ export const useQRStats = (filters?: {
 
       return stats;
     },
+  });
+};
+
+export const useRegisterQRPrint = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (printData: {
+      qr_code_id: string;
+      print_reason?: string;
+      print_quality?: string;
+      printer_info?: Record<string, any>;
+      notes?: string;
+    }) => {
+      const { data, error } = await supabase.rpc('register_qr_print', {
+        p_qr_code_id: printData.qr_code_id,
+        p_print_reason: printData.print_reason || 'manual',
+        p_print_quality: printData.print_quality || 'standard',
+        p_printer_info: printData.printer_info || {},
+        p_notes: printData.notes || null
+      });
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+    },
+  });
+};
+
+export const useQRPrintHistory = (qrCodeId: string) => {
+  return useQuery({
+    queryKey: ['qr-print-history', qrCodeId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('qr_print_history')
+        .select(`
+          *,
+          printed_by_user:printed_by(
+            id,
+            email
+          )
+        `)
+        .eq('qr_code_id', qrCodeId)
+        .order('printed_at', { ascending: false });
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!qrCodeId,
   });
 };
