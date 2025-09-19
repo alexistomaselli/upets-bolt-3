@@ -376,6 +376,7 @@ export const QRScanPage: React.FC = () => {
           </Link>
         </div>
       </div>
+    </div>
     );
   }
 };
