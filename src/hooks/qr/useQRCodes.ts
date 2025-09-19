@@ -93,18 +93,55 @@ export const useQRCodeByCode = (code: string) => {
   return useQuery({
     queryKey: ['qr-code-by-code', code],
     queryFn: async () => {
+      if (!supabase) return null;
+      
       const { data, error } = await supabase
         .from('qr_codes')
         .select(`
-          *,
-          pet:pet_id(*),
-          owner:owner_id(*)
+          id,
+          code,
+          pet_id,
+          owner_id,
+          status,
+          activation_date,
+          scan_count,
+          last_scan_date,
+          last_scan_location,
+          metadata,
+          created_at
         `)
         .eq('code', code)
         .single();
 
       if (error) throw error;
-      return data as QRCode;
+      
+      // Si tiene mascota y dueño, cargar esa información
+      let petData = null;
+      let ownerData = null;
+      
+      if (data.pet_id) {
+        const { data: pet } = await supabase
+          .from('pets')
+          .select('name, species, breed, color, photo_url, medical_conditions, medications, special_needs')
+          .eq('id', data.pet_id)
+          .single();
+        petData = pet;
+      }
+      
+      if (data.owner_id) {
+        const { data: owner } = await supabase
+          .from('user_profiles')
+          .select('first_name, last_name, phone, whatsapp, emergency_contact_name, emergency_contact_phone')
+          .eq('user_id', data.owner_id)
+          .single();
+        ownerData = owner;
+      }
+      
+      return {
+        ...data,
+        pet: petData,
+        owner: ownerData
+      } as QRCode;
     },
     enabled: !!code,
   });

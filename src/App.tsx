@@ -18,6 +18,7 @@ import { WhatsAppPage } from './pages/WhatsAppPage';
 import { RoadmapPage } from './pages/RoadmapPage';
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { CustomerDashboard } from './pages/CustomerDashboard';
+import { QRScanPage } from './pages/QRScanPage';
 import { DebugAuth } from './components/DebugAuth';
 import { SupabaseDiagnostic } from './components/SupabaseDiagnostic';
 
@@ -103,6 +104,9 @@ const AppContent = ({ isMenuOpen, setIsMenuOpen }: { isMenuOpen: boolean, setIsM
           <Route path="/producto/:slug" element={<ProductPage />} />
           <Route path="/whatsapp" element={<WhatsAppPage />} />
           <Route path="/roadmap" element={<RoadmapPage />} />
+          
+          {/* Página pública de escaneo QR */}
+          <Route path="/qr/:code" element={<QRScanPage />} />
           
           {/* Rutas de autenticación */}
           <Route path="/login" element={<LoginForm />} />

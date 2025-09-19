@@ -64,29 +64,58 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
     if (!ctx) return;
 
     try {
-      // Crear logo simple con texto AFPets
-      const logoSize = size * 0.15; // 15% del tamaño del QR
+      // Cargar logo real de AFPets
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = reject;
+        logoImg.src = '/afpets-7.webp';
+      });
+
+      const logoSize = size * 0.2; // 20% del tamaño del QR
       const logoX = (size - logoSize) / 2;
       const logoY = (size - logoSize) / 2;
 
-      // Fondo blanco para el logo
+      // Fondo blanco circular para el logo
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 4, 0, 2 * Math.PI);
+      ctx.fill();
+      
+      // Borde circular
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Dibujar logo real
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, 2 * Math.PI);
+      ctx.clip();
+      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
+      ctx.restore();
+    } catch (error) {
+      console.error('Error agregando logo real, usando fallback:', error);
+      // Fallback: texto simple si no se puede cargar la imagen
+      const logoSize = size * 0.15;
+      const logoX = (size - logoSize) / 2;
+      const logoY = (size - logoSize) / 2;
+
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
       
-      // Borde del logo
       ctx.strokeStyle = '#000000';
       ctx.lineWidth = 2;
       ctx.strokeRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
 
-      // Texto AFPets
       ctx.fillStyle = '#000000';
       ctx.font = `bold ${logoSize * 0.2}px Arial`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText('AF', logoX + logoSize / 2, logoY + logoSize / 2 - 4);
       ctx.fillText('PETS', logoX + logoSize / 2, logoY + logoSize / 2 + 8);
-    } catch (error) {
-      console.error('Error agregando logo:', error);
     }
   };
 
