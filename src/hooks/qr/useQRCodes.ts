@@ -26,9 +26,9 @@ export const useQRCodes = (filters?: QRFilters) => {
           sold_by_branch_id,
           created_at,
           updated_at,
-          pets(name, species, breed),
-          user_profiles(first_name, last_name, email),
-          branches(name, city, company_id, companies(name))
+          pet_id(name, species, breed),
+          owner_id(first_name, last_name, email),
+          sold_by_branch_id(name, city, company_id, companies(name))
         `)
         .order('created_at', { ascending: false });
 
@@ -70,9 +70,9 @@ export const useQRCode = (id: string) => {
         .from('qr_codes')
         .select(`
           *,
-          pet:pets(*),
-          owner:user_profiles(*),
-          assigned_branch:branches(*),
+          pet:pet_id(*),
+          owner:owner_id(*),
+          assigned_branch:sold_by_branch_id(*),
           scans:qr_scans(*)
         `)
         .eq('id', id)
@@ -93,8 +93,8 @@ export const useQRCodeByCode = (code: string) => {
         .from('qr_codes')
         .select(`
           *,
-          pet:pets(*),
-          owner:user_profiles(*)
+          pet:pet_id(*),
+          owner:owner_id(*)
         `)
         .eq('code', code)
         .single();
