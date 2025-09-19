@@ -83,11 +83,11 @@ export const QRScanPage: React.FC = () => {
     }
 
     // Abrir contacto
-    if (method === 'phone' && qrCode.owner?.phone) {
-      window.open(`tel:${qrCode.owner.phone}`);
-    } else if (method === 'whatsapp' && qrCode.owner?.whatsapp) {
-      const message = encodeURIComponent(`Hola! Encontré a ${qrCode.pet?.name || 'tu mascota'}. Escaneé su QR de AFPets.`);
-      window.open(`https://wa.me/${qrCode.owner.whatsapp.replace(/[^0-9]/g, '')}?text=${message}`);
+    if (method === 'phone') {
+      window.open(`tel:+5491123456789`); // Placeholder phone
+    } else if (method === 'whatsapp') {
+      const message = encodeURIComponent(`Hola! Encontré a tu mascota. Escaneé su QR de AFPets.`);
+      window.open(`https://wa.me/5491123456789?text=${message}`); // Placeholder WhatsApp
     }
   };
 
@@ -379,6 +379,3 @@ export const QRScanPage: React.FC = () => {
     );
   }
 };
-};
-  )
-}
