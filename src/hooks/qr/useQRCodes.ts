@@ -30,10 +30,7 @@ export const useQRCodes = (filters?: QRFilters) => {
           last_printed_at,
           print_count,
           created_at,
-          updated_at,
-          pets(name, species, breed),
-          user_profiles(first_name, last_name, email),
-          branches(name, city)
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
