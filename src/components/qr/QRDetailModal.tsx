@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, QrCode, Calendar, MapPin, User, Printer, Eye, Building, Phone, Mail } from 'lucide-react';
 import { QRCode } from '../../types/qr';
-import { useQRPrintHistory } from '../../hooks/qr/useQRCodes';
+import { useQRPrintHistory, useQRScans } from '../../hooks/qr/useQRCodes';
 import { Modal, Badge, Button, LoadingSpinner } from '../ui';
 import { QRPreview } from './QRPreview';
 
@@ -21,6 +21,7 @@ export const QRDetailModal: React.FC<QRDetailModalProps> = ({
   const [activeTab, setActiveTab] = useState<'info' | 'scans' | 'prints'>('info');
   
   const { data: printHistory, isLoading: loadingPrintHistory } = useQRPrintHistory(qrCode?.id || '');
+  const { data: scans, isLoading: loadingScans } = useQRScans(qrCode?.id || '');
 
   if (!qrCode) return null;
 
@@ -219,38 +220,78 @@ export const QRDetailModal: React.FC<QRDetailModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Historial de Escaneos</h3>
             
-            {qrCode.scan_count === 0 ? (
+            {loadingScans ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner />
+              </div>
+            ) : !scans || scans.length === 0 ? (
               <div className="text-center py-8">
                 <Eye className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <p className="text-gray-600">Este QR aún no ha sido escaneado</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {/* Aquí mostraremos los escaneos cuando tengamos los datos */}
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-medium text-gray-900">Total de escaneos</p>
                       <p className="text-sm text-gray-600">
-                        {qrCode.last_scan_date ? 
-                          `Último: ${new Date(qrCode.last_scan_date).toLocaleDateString()}` : 
-                          'Sin escaneos recientes'
+                        {scans.length > 0 ? 
+                          `Último: ${new Date(scans[0].scan_date).toLocaleDateString()}` : 
+                          'Sin escaneos'
                         }
                       </p>
                     </div>
                     <div className="text-2xl font-bold text-green-600">
-                      {qrCode.scan_count}
+                      {scans.length}
                     </div>
                   </div>
                 </div>
                 
-                {qrCode.last_scan_location && (
+                {/* Lista de escaneos */}
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-900">Escaneos detallados</h4>
+                  {scans.map((scan) => (
+                    <div key={scan.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                            <span className="text-sm font-medium text-gray-900">
+                              {new Date(scan.scan_date).toLocaleDateString()} - {new Date(scan.scan_date).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          {scan.scan_location && (
+                            <div className="flex items-center mt-1">
+                              <MapPin className="h-4 w-4 text-gray-400 mr-2" />
+                              <span className="text-sm text-gray-600">{scan.scan_location}</span>
+                            </div>
+                          )}
+                          {scan.notes && (
+                            <div className="mt-1 text-xs text-gray-500">
+                              {scan.notes}
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {scan.contact_made && (
+                            <Badge variant="success" size="sm">
+                              Contacto realizado
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                {scans.length > 0 && scans[0].scan_location && (
                   <div className="bg-blue-50 rounded-lg p-4">
                     <div className="flex items-center">
                       <MapPin className="h-5 w-5 text-blue-600 mr-2" />
                       <div>
                         <p className="font-medium text-blue-900">Última ubicación</p>
-                        <p className="text-sm text-blue-700">{qrCode.last_scan_location}</p>
+                        <p className="text-sm text-blue-700">{scans[0].scan_location}</p>
                       </div>
                     </div>
                   </div>

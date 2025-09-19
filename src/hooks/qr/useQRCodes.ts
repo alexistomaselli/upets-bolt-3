@@ -457,4 +457,3 @@ export const useQRPrintHistory = (qrCodeId: string) => {
     },
     enabled: !!qrCodeId,
   });
-};
