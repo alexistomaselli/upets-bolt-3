@@ -14,7 +14,6 @@ export const QRGenerationForm: React.FC<QRGenerationFormProps> = ({
 }) => {
   const [formData, setFormData] = useState({
     quantity: 1,
-    qr_type: 'basic' as 'basic' | 'premium' | 'institutional',
     notes: '',
   });
 
@@ -49,10 +48,6 @@ export const QRGenerationForm: React.FC<QRGenerationFormProps> = ({
     }));
   };
 
-  const estimatedCost = formData.quantity * (
-    formData.qr_type === 'basic' ? 50 : 
-    formData.qr_type === 'premium' ? 100 : 75
-  );
 
   return (
     <Card>
@@ -84,72 +79,6 @@ export const QRGenerationForm: React.FC<QRGenerationFormProps> = ({
           </div>
 
           {/* Tipo de QR */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-3">
-              Tipo de QR
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.qr_type === 'basic' 
-                  ? 'border-green-500 bg-green-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="qr_type"
-                  value="basic"
-                  checked={formData.qr_type === 'basic'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qr_type: e.target.value as any }))}
-                  className="sr-only"
-                />
-                <div className="text-center w-full">
-                  <div className="font-medium text-gray-900">Básico</div>
-                  <div className="text-sm text-gray-600">Funcionalidad estándar</div>
-                  <div className="text-xs text-green-600 font-medium mt-1">$50 c/u</div>
-                </div>
-              </label>
-
-              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.qr_type === 'premium' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="qr_type"
-                  value="premium"
-                  checked={formData.qr_type === 'premium'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qr_type: e.target.value as any }))}
-                  className="sr-only"
-                />
-                <div className="text-center w-full">
-                  <div className="font-medium text-gray-900">Premium</div>
-                  <div className="text-sm text-gray-600">Funciones avanzadas</div>
-                  <div className="text-xs text-blue-600 font-medium mt-1">$100 c/u</div>
-                </div>
-              </label>
-
-              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.qr_type === 'institutional' 
-                  ? 'border-purple-500 bg-purple-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}>
-                <input
-                  type="radio"
-                  name="qr_type"
-                  value="institutional"
-                  checked={formData.qr_type === 'institutional'}
-                  onChange={(e) => setFormData(prev => ({ ...prev, qr_type: e.target.value as any }))}
-                  className="sr-only"
-                />
-                <div className="text-center w-full">
-                  <div className="font-medium text-gray-900">Institucional</div>
-                  <div className="text-sm text-gray-600">Para refugios/ONGs</div>
-                  <div className="text-xs text-purple-600 font-medium mt-1">$75 c/u</div>
-                </div>
-              </label>
-            </div>
-          </div>
 
           {/* Notas */}
           <div>
@@ -172,14 +101,6 @@ export const QRGenerationForm: React.FC<QRGenerationFormProps> = ({
               <div className="flex justify-between">
                 <span className="text-gray-600">Cantidad:</span>
                 <span className="font-medium">{formData.quantity} códigos QR</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Tipo:</span>
-                <span className="font-medium capitalize">{formData.qr_type}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Costo estimado:</span>
-                <span className="font-medium text-green-600">${estimatedCost}</span>
               </div>
               <div className="flex justify-between border-t border-gray-200 pt-2">
                 <span className="text-gray-600">Estado inicial:</span>

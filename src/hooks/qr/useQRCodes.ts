@@ -142,7 +142,6 @@ export const useCreateQRs = () => {
         const code = `QR${timestamp}${random}${i.toString().padStart(3, '0')}`;
         qrCodes.push({
           code,
-          qr_type: qrData.qr_type,
           status: 'inactive',
           scan_count: 0,
           is_printed: false,
