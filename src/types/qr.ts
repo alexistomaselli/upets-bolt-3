@@ -35,6 +35,25 @@ export interface QRCode {
   subscription?: Subscription;
 }
 
+export interface QRPrintHistory {
+  id: string;
+  qr_code_id: string;
+  printed_by: string | null;
+  print_reason: string;
+  print_quality: string;
+  printer_info: Record<string, any>;
+  notes: string | null;
+  printed_at: string;
+  created_at: string;
+  
+  // Relaciones
+  qr_code?: QRCode;
+  printed_by_user?: {
+    first_name: string | null;
+    last_name: string | null;
+  };
+}
+
 export interface Subscription {
   id: string;
   qr_code_id: string;
@@ -123,6 +142,14 @@ export interface CreateQRData {
   notes?: string;
 }
 
+export interface RegisterPrintData {
+  qr_code_ids: string[];
+  print_reason?: string;
+  print_quality?: string;
+  printer_info?: Record<string, any>;
+  notes?: string;
+}
+
 export interface CreatePrintBatchData {
   qr_ids: string[];
   notes?: string;
@@ -149,6 +176,7 @@ export interface QRFilters {
   search?: string;
   date_from?: string;
   date_to?: string;
+  is_printed?: boolean;
 }
 
 // Para el sistema de escaneo público
