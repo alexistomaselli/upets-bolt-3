@@ -93,6 +93,16 @@ export const QRList: React.FC<QRListProps> = ({
             <option value="unassigned">Sin asignar</option>
             {/* TODO: Cargar comercios reales cuando esté el módulo */}
           </select>
+          <select
+            value={filters.is_printed?.toString() || ''}
+            onChange={(e) => handleFilterChange('is_printed', e.target.value === 'true' ? true : e.target.value === 'false' ? false : undefined)}
+            className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+          >
+            <option value="">Estado de impresión</option>
+            <option value="true">Impresos</option>
+            <option value="false">Sin imprimir</option>
+          </select>
+
 
           <Button variant="outline" icon={<Download className="h-4 w-4" />}>
             Exportar
@@ -129,6 +139,9 @@ export const QRList: React.FC<QRListProps> = ({
                     Código
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Impresión
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -163,6 +176,22 @@ export const QRList: React.FC<QRListProps> = ({
                           </div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {qrCode.is_printed ? (
+                        <div>
+                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                            Impreso ({qrCode.print_count}x)
+                          </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Último: {qrCode.last_printed_at ? new Date(qrCode.last_printed_at).toLocaleDateString() : 'N/A'}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                          Sin imprimir
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
