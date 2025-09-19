@@ -444,17 +444,16 @@ export const useQRPrintHistory = (qrCodeId: string) => {
   return useQuery({
     queryKey: ['qr-print-history', qrCodeId],
     queryFn: async () => {
+      if (!supabase) return [];
+      
       const { data, error } = await supabase
         .from('qr_print_history')
-        .select(`
-          *,
-          printed_by_user:users!printed_by(id, email)
-        `)
+        .select('*')
         .eq('qr_code_id', qrCodeId)
         .order('printed_at', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
     enabled: !!qrCodeId,
   });
