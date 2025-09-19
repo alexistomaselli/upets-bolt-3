@@ -17,11 +17,20 @@ export const AdminDashboard: React.FC = () => {
   ];
 
   const quickActions = [
-    { name: 'Gestionar Usuarios', icon: Users, href: '/admin/users', color: 'bg-blue-600' },
+    { name: 'Gestionar Usuarios', icon: Users, action: 'users', color: 'bg-blue-600' },
     { name: 'Comercios', icon: Store, action: 'companies', color: 'bg-green-600' },
     { name: 'Gestión QR', icon: QrCode, action: 'qr-management', color: 'bg-purple-600' },
-    { name: 'Configurar Roles', icon: Shield, href: '/admin/roles', color: 'bg-green-600' },
-    { name: 'Configuración', icon: Settings, href: '/admin/settings', color: 'bg-orange-600' },
+    { name: 'Configurar Roles', icon: Shield, action: 'roles', color: 'bg-orange-600' },
+    { name: 'Configuración', icon: Settings, action: 'settings', color: 'bg-gray-600' },
+  ];
+
+  const navigationItems = [
+    { id: 'overview', label: 'Panel Principal', icon: BarChart3 },
+    { id: 'companies', label: 'Comercios', icon: Store },
+    { id: 'qr-management', label: 'Gestión QR', icon: QrCode },
+    { id: 'users', label: 'Usuarios', icon: Users },
+    { id: 'roles', label: 'Roles', icon: Shield },
+    { id: 'settings', label: 'Configuración', icon: Settings },
   ];
 
   return (
@@ -57,6 +66,29 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Navigation Breadcrumb */}
+        <div className="bg-white rounded-xl shadow-lg p-4 mb-6">
+          <nav className="flex items-center space-x-4">
+            {navigationItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveSection(item.id);
+                  setShowQRForm(false); // Reset form state when changing sections
+                }}
+                className={`flex items-center px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
+                  activeSection === item.id
+                    ? 'bg-green-100 text-green-700'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <item.icon className="h-4 w-4 mr-2" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
         {activeSection === 'companies' && (
         <CompanyManagement />
         )}
@@ -106,7 +138,7 @@ export const AdminDashboard: React.FC = () => {
             {quickActions.map((action) => (
               <button
                 key={action.name}
-                onClick={() => action.action ? setActiveSection(action.action) : window.location.href = action.href}
+                onClick={() => setActiveSection(action.action)}
                 className="flex items-center p-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 group text-left"
               >
                 <div className={`p-3 rounded-lg ${action.color} text-white group-hover:scale-110 transition-transform duration-200`}>
@@ -184,6 +216,31 @@ export const AdminDashboard: React.FC = () => {
           </div>
         )}
           </>
+        )}
+
+        {/* Placeholder sections for other admin modules */}
+        {activeSection === 'users' && (
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Gestión de Usuarios</h2>
+            <p className="text-gray-600">Módulo en desarrollo</p>
+          </div>
+        )}
+
+        {activeSection === 'roles' && (
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <Shield className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Configurar Roles</h2>
+            <p className="text-gray-600">Módulo en desarrollo</p>
+          </div>
+        )}
+
+        {activeSection === 'settings' && (
+          <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+            <Settings className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">Configuración del Sistema</h2>
+            <p className="text-gray-600">Módulo en desarrollo</p>
+          </div>
         )}
       </div>
     </div>
