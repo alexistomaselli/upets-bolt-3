@@ -25,10 +25,7 @@ export const useQRCodes = (filters?: QRFilters) => {
           purchase_date,
           sold_by_branch_id,
           created_at,
-          updated_at,
-          pet_id(name, species, breed),
-          owner_id(first_name, last_name, email),
-          sold_by_branch_id(name, city, company_id, companies(name))
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
