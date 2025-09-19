@@ -380,3 +380,5 @@ export const QRScanPage: React.FC = () => {
   }
 };
 };
+  )
+}
