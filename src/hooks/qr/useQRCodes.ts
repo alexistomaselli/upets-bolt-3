@@ -306,7 +306,8 @@ export const useRecordQRScan = () => {
       contact_made?: boolean;
       notes?: string;
     }) => {
-      const { data, error } = await supabase
+      // Primero insertar el escaneo
+      const { data: scanResult, error: scanError } = await supabase
         .from('qr_scans')
         .insert([{
           ...scanData,
@@ -315,18 +316,34 @@ export const useRecordQRScan = () => {
         .select()
         .single();
 
-      if (error) throw error;
+      if (scanError) throw scanError;
 
-      // Actualizar contador de escaneos en el QR
-      await supabase.rpc('increment_qr_scan_count', { 
-        qr_id: scanData.qr_code_id 
-      });
+      // Actualizar contador de escaneos manualmente
+      const { data: currentQR, error: qrError } = await supabase
+        .from('qr_codes')
+        .select('scan_count')
+        .eq('id', scanData.qr_code_id)
+        .single();
 
-      return data as QRScan;
+      if (qrError) throw qrError;
+
+      const { error: updateError } = await supabase
+        .from('qr_codes')
+        .update({ 
+          scan_count: (currentQR.scan_count || 0) + 1,
+          last_scan_date: new Date().toISOString(),
+          last_scan_location: scanData.scan_location || null
+        })
+        .eq('id', scanData.qr_code_id);
+
+      if (updateError) throw updateError;
+
+      return scanResult as QRScan;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
       queryClient.invalidateQueries({ queryKey: ['qr-scans'] });
+      queryClient.invalidateQueries({ queryKey: ['qr-stats'] });
     },
   });
 };

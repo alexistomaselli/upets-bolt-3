@@ -27,7 +27,7 @@ export const QRDetailModal: React.FC<QRDetailModalProps> = ({
 
   const tabs = [
     { id: 'info', label: 'Información General', icon: QrCode },
-    { id: 'scans', label: `Escaneos (${qrCode.scan_count || 0})`, icon: Eye },
+    { id: 'scans', label: `Escaneos (${scans?.length || qrCode.scan_count || 0})`, icon: Eye },
     { id: 'prints', label: `Impresiones (${qrCode.print_count || 0})`, icon: Printer },
   ];
 
