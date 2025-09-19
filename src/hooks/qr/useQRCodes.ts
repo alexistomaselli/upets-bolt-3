@@ -440,6 +440,25 @@ export const useRegisterQRPrint = () => {
   });
 };
 
+export const useQRScans = (qrCodeId: string) => {
+  return useQuery({
+    queryKey: ['qr-scans', qrCodeId],
+    queryFn: async () => {
+      if (!supabase) return [];
+      
+      const { data, error } = await supabase
+        .from('qr_scans')
+        .select('*')
+        .eq('qr_code_id', qrCodeId)
+        .order('scan_date', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!qrCodeId,
+  });
+};
+
 export const useQRPrintHistory = (qrCodeId: string) => {
   return useQuery({
     queryKey: ['qr-print-history', qrCodeId],
