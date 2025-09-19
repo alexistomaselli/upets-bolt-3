@@ -103,6 +103,7 @@ export const useQRCodeByCode = (code: string) => {
           pet_id,
           owner_id,
           status,
+          qr_type,
           activation_date,
           scan_count,
           last_scan_date,
@@ -115,33 +116,7 @@ export const useQRCodeByCode = (code: string) => {
 
       if (error) throw error;
       
-      // Si tiene mascota y dueño, cargar esa información
-      let petData = null;
-      let ownerData = null;
-      
-      if (data.pet_id) {
-        const { data: pet } = await supabase
-          .from('pets')
-          .select('name, species, breed, color, photo_url, medical_conditions, medications, special_needs')
-          .eq('id', data.pet_id)
-          .single();
-        petData = pet;
-      }
-      
-      if (data.owner_id) {
-        const { data: owner } = await supabase
-          .from('user_profiles')
-          .select('first_name, last_name, phone, whatsapp, emergency_contact_name, emergency_contact_phone')
-          .eq('user_id', data.owner_id)
-          .single();
-        ownerData = owner;
-      }
-      
-      return {
-        ...data,
-        pet: petData,
-        owner: ownerData
-      } as QRCode;
+      return data as QRCode;
     },
     enabled: !!code,
   });
