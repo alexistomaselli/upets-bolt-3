@@ -17,6 +17,7 @@ export const useQRCodes = (filters?: QRFilters) => {
           pet_id,
           owner_id,
           status,
+          qr_type,
           activation_date,
           expiry_date,
           scan_count,
@@ -29,7 +30,10 @@ export const useQRCodes = (filters?: QRFilters) => {
           last_printed_at,
           print_count,
           created_at,
-          updated_at
+          updated_at,
+          pets(name, species, breed),
+          user_profiles(first_name, last_name, email),
+          branches(name, city)
         `)
         .order('created_at', { ascending: false });
 
