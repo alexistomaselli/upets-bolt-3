@@ -30,7 +30,8 @@ export const useQRCodes = (filters?: QRFilters) => {
           last_printed_at,
           print_count,
           created_at,
-          updated_at
+          updated_at,
+          qr_scans(count)
         `)
         .order('created_at', { ascending: false });
 
@@ -60,8 +61,14 @@ export const useQRCodes = (filters?: QRFilters) => {
       
       if (error) throw error;
       
+      // Calcular scan_count real desde qr_scans
+      const processedData = (data || []).map(qr => ({
+        ...qr,
+        scan_count: qr.qr_scans?.[0]?.count || 0
+      }));
+      
       console.log('✅ QR Codes cargados:', data?.length || 0);
-      return (data || []) as QRCodeType[];
+      return processedData as QRCode[];
     },
     enabled: !!supabase,
   });
