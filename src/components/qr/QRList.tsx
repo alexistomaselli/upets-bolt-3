@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, QrCode, Building, Calendar, Eye, User, Store, Link } from 'lucide-react';
+import { Plus, Filter, Download, QrCode, Building, Calendar, Eye, User, Store, Link, Info } from 'lucide-react';
 import { useQRCodes } from '../../hooks/qr/useQRCodes';
+import { useRegisterQRPrint } from '../../hooks/qr/useQRCodes';
 import { QRCode as QRCodeType, QRFilters } from '../../types/qr';
 import { Button, Input, EmptyState, LoadingSpinner } from '../ui';
+import { QRDetailModal } from './QRDetailModal';
 
 interface QRListProps {
   ownerId?: string;
@@ -23,18 +25,43 @@ export const QRList: React.FC<QRListProps> = ({
   onDelete,
   showActions = true,
 }) => {
+  const [selectedQR, setSelectedQR] = useState<QRCodeType | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [filters, setFilters] = useState<QRFilters>({
     owner_id: ownerId,
     sold_by_branch_id: assignedBranchId,
   });
 
   const { data: qrCodes, isLoading } = useQRCodes(filters);
+  const registerPrintMutation = useRegisterQRPrint();
 
   const handleFilterChange = (key: keyof QRFilters, value: string) => {
     setFilters(prev => ({
       ...prev,
       [key]: value || undefined,
     }));
+  };
+
+  const handleViewDetails = (qrCode: QRCodeType) => {
+    setSelectedQR(qrCode);
+    setShowDetailModal(true);
+    if (onView) onView(qrCode);
+  };
+
+  const handleMarkAsPrinted = async (qrId: string) => {
+    try {
+      await registerPrintMutation.mutateAsync({
+        qr_code_id: qrId,
+        print_reason: 'manual',
+        print_quality: 'standard',
+        notes: 'Marcado como impreso desde administración'
+      });
+      
+      // Cerrar modal y actualizar
+      setShowDetailModal(false);
+    } catch (error) {
+      console.error('Error marking as printed:', error);
+    }
   };
 
   if (isLoading) {
@@ -262,15 +289,13 @@ export const QRList: React.FC<QRListProps> = ({
                     {showActions && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex items-center space-x-2">
-                          {onView && (
-                            <button
-                              onClick={() => onView(qrCode)}
-                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
-                              title="Ver detalles"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleViewDetails(qrCode)}
+                            className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                            title="Ver detalles"
+                          >
+                            <Info className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     )}
@@ -281,6 +306,14 @@ export const QRList: React.FC<QRListProps> = ({
           </div>
         </div>
       )}
+
+      {/* QR Detail Modal */}
+      <QRDetailModal
+        qrCode={selectedQR}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        onMarkAsPrinted={handleMarkAsPrinted}
+      />
     </div>
   );
 };

@@ -376,19 +376,55 @@ export const useRegisterQRPrint = () => {
       printer_info?: Record<string, any>;
       notes?: string;
     }) => {
-      const { data, error } = await supabase.rpc('register_qr_print', {
-        p_qr_code_id: printData.qr_code_id,
-        p_print_reason: printData.print_reason || 'manual',
-        p_print_quality: printData.print_quality || 'standard',
-        p_printer_info: printData.printer_info || {},
-        p_notes: printData.notes || null
-      });
+      // Insertar en historial de impresión
+      const { data: historyData, error: historyError } = await supabase
+        .from('qr_print_history')
+        .insert([{
+          qr_code_id: printData.qr_code_id,
+          print_reason: printData.print_reason || 'manual',
+          print_quality: printData.print_quality || 'standard',
+          printer_info: printData.printer_info || {},
+          notes: printData.notes || null
+        }])
+        .select()
+        .single();
+
+      if (historyError) throw historyError;
+
+      // Actualizar campos de impresión en qr_codes
+      const now = new Date().toISOString();
+      const { data: qrData, error: qrError } = await supabase
+        .from('qr_codes')
+        .select('is_printed, print_count')
+        .eq('id', printData.qr_code_id)
+        .single();
+
+      if (qrError) throw qrError;
+
+      const updateData: any = {
+        is_printed: true,
+        last_printed_at: now,
+        print_count: (qrData.print_count || 0) + 1
+      };
+
+      // Si es la primera impresión, establecer first_printed_at
+      if (!qrData.is_printed) {
+        updateData.first_printed_at = now;
+      }
+
+      const { data, error } = await supabase
+        .from('qr_codes')
+        .update(updateData)
+        .eq('id', printData.qr_code_id)
+        .select()
+        .single();
 
       if (error) throw error;
-      return data;
+      return { qr_code: data, print_history: historyData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['qr-print-history'] });
     },
   });
 };
