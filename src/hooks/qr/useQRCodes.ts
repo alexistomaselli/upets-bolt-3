@@ -74,9 +74,9 @@ export const useQRCode = (id: string) => {
         .from('qr_codes')
         .select(`
           *,
-          pet:pet_id(*),
-          owner:owner_id(*),
-          assigned_branch:sold_by_branch_id(*),
+          pet:pets(name, species, breed),
+          owner:user_profiles(first_name, last_name, email, phone),
+          assigned_branch:branches(name, city, company:companies(name)),
           scans:qr_scans(*)
         `)
         .eq('id', id)
@@ -111,12 +111,11 @@ export const useQRCodeByCode = (code: string) => {
           metadata,
           created_at
         `)
-        .eq('code', code)
-        .single();
+        .eq('code', code);
 
       if (error) throw error;
       
-      return data as QRCode;
+      return (data && data.length > 0 ? data[0] : null) as QRCode | null;
     },
     enabled: !!code,
   });
@@ -449,10 +448,7 @@ export const useQRPrintHistory = (qrCodeId: string) => {
         .from('qr_print_history')
         .select(`
           *,
-          printed_by_user:printed_by(
-            id,
-            email
-          )
+          printed_by_user:user_profiles(first_name, last_name)
         `)
         .eq('qr_code_id', qrCodeId)
         .order('printed_at', { ascending: false });
