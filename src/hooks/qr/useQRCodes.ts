@@ -344,6 +344,8 @@ export const useRecordQRScan = () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
       queryClient.invalidateQueries({ queryKey: ['qr-scans'] });
       queryClient.invalidateQueries({ queryKey: ['qr-stats'] });
+      // Forzar recarga de la página para actualizar la tabla
+      window.location.reload();
     },
   });
 };
