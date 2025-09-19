@@ -2,11 +2,12 @@ import React from 'react';
 import { Users, Shield, Building, BarChart3, Settings, Store, QrCode } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { CompanyManagement } from '../../components/companies/CompanyManagement';
-import { QRList } from '../../components/qr';
+import { QRList, QRGenerationForm } from '../../components/qr';
 
 export const AdminDashboard: React.FC = () => {
   const { user, profile, roles, isSuperAdmin, isCompanyAdmin, isBranchAdmin } = useAuth();
   const [activeSection, setActiveSection] = React.useState('overview');
+  const [showQRForm, setShowQRForm] = React.useState(false);
 
   const stats = [
     { name: 'Usuarios Totales', value: '1,234', icon: Users, color: 'text-blue-600' },
@@ -61,10 +62,22 @@ export const AdminDashboard: React.FC = () => {
         )}
 
         {activeSection === 'qr-management' && (
-          <QRList 
-            showActions={true}
-            onCreateNew={() => console.log('Crear QRs')}
-          />
+          <div className="space-y-6">
+            {showQRForm ? (
+              <QRGenerationForm
+                onSuccess={() => {
+                  setShowQRForm(false);
+                  // La lista se actualizará automáticamente por React Query
+                }}
+                onCancel={() => setShowQRForm(false)}
+              />
+            ) : (
+              <QRList 
+                showActions={true}
+                onCreateNew={() => setShowQRForm(true)}
+              />
+            )}
+          </div>
         )}
 
         {activeSection === 'overview' && (

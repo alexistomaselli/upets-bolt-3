@@ -133,19 +133,25 @@ export const useCreateQRs = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (qrData: CreateQRData) => {
+    mutationFn: async (qrData: { quantity: number; qr_type: 'basic' | 'premium' | 'institutional'; notes?: string }) => {
       // Generar códigos QR únicos
       const qrCodes = [];
       for (let i = 0; i < qrData.quantity; i++) {
-        const code = `QR${Date.now()}${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
+        const timestamp = Date.now();
+        const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+        const code = `QR${timestamp}${random}${i.toString().padStart(3, '0')}`;
         qrCodes.push({
           code,
           qr_type: qrData.qr_type,
           status: 'inactive',
+          scan_count: 0,
           is_printed: false,
+          print_count: 0,
           metadata: { 
             creation_notes: qrData.notes,
-            created_by_admin: true
+            created_by_admin: true,
+            batch_size: qrData.quantity,
+            batch_index: i + 1
           }
         });
       }
@@ -160,6 +166,7 @@ export const useCreateQRs = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });
+      queryClient.invalidateQueries({ queryKey: ['qr-stats'] });
     },
   });
 };

@@ -5,3 +5,4 @@ export { QRPreview } from './QRPreview';
 export { QRDetailModal } from './QRDetailModal';
 export { QRManagement } from './QRManagement';
 export { QRStats } from './QRStats';
+export { QRGenerationForm } from './QRGenerationForm';
