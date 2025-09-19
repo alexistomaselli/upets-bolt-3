@@ -448,7 +448,7 @@ export const useQRPrintHistory = (qrCodeId: string) => {
         .from('qr_print_history')
         .select(`
           *,
-          printed_by_user:user_profiles(first_name, last_name)
+          printed_by_user:users!printed_by(id, email)
         `)
         .eq('qr_code_id', qrCodeId)
         .order('printed_at', { ascending: false });
