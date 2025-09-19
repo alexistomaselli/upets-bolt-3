@@ -16,7 +16,6 @@ export const useQRCodes = (filters?: QRFilters) => {
           code,
           pet_id,
           owner_id,
-          qr_type,
           status,
           activation_date,
           expiry_date,
@@ -26,15 +25,15 @@ export const useQRCodes = (filters?: QRFilters) => {
           purchase_date,
           sold_by_branch_id,
           created_at,
-          updated_at
+          updated_at,
+          pets(name, species, breed),
+          user_profiles(first_name, last_name, email),
+          branches(name, city, company_id, companies(name))
         `)
         .order('created_at', { ascending: false });
 
       if (filters?.status) {
         query = query.eq('status', filters.status);
-      }
-      if (filters?.qr_type) {
-        query = query.eq('qr_type', filters.qr_type);
       }
       if (filters?.owner_id) {
         query = query.eq('owner_id', filters.owner_id);

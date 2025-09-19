@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Filter, Download, QrCode, Printer, Building, Calendar, Eye } from 'lucide-react';
+import { Plus, Filter, Download, QrCode, Building, Calendar, Eye, User, Store, Link } from 'lucide-react';
 import { useQRCodes } from '../../hooks/qr/useQRCodes';
 import { QRCode as QRCodeType, QRFilters } from '../../types/qr';
 import { Button, Input, EmptyState, LoadingSpinner } from '../ui';
@@ -82,20 +82,16 @@ export const QRList: React.FC<QRListProps> = ({
             <option value="active">Activos</option>
             <option value="lost">Perdidos</option>
             <option value="found">Encontrados</option>
-            <option value="printed">Impresos</option>
-            <option value="assigned">Asignados</option>
-            <option value="expired">Expirados</option>
           </select>
 
           <select
-            value={filters.qr_type || ''}
-            onChange={(e) => handleFilterChange('qr_type', e.target.value)}
+            value={filters.sold_by_branch_id || ''}
+            onChange={(e) => handleFilterChange('sold_by_branch_id', e.target.value)}
             className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
           >
-            <option value="">Todos los tipos</option>
-            <option value="basic">Básico</option>
-            <option value="premium">Premium</option>
-            <option value="institutional">Institucional</option>
+            <option value="">Todos los comercios</option>
+            <option value="unassigned">Sin asignar</option>
+            {/* TODO: Cargar comercios reales cuando esté el módulo */}
           </select>
 
           <Button variant="outline" icon={<Download className="h-4 w-4" />}>
@@ -133,19 +129,19 @@ export const QRList: React.FC<QRListProps> = ({
                     Código
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Tipo
+                    Estado
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
+                    Mascota/Dueño
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Comercio
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Escaneos
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Fecha Creación
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Activación
                   </th>
                   {showActions && (
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -160,18 +156,13 @@ export const QRList: React.FC<QRListProps> = ({
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <QrCode className="h-5 w-5 text-green-600 mr-3" />
-                        <span className="text-sm font-medium text-gray-900">{qrCode.code}</span>
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">{qrCode.code}</div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(qrCode.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        qrCode.qr_type === 'basic' ? 'bg-gray-100 text-gray-800' :
-                        qrCode.qr_type === 'premium' ? 'bg-blue-100 text-blue-800' :
-                        'bg-purple-100 text-purple-800'
-                      }`}>
-                        {qrCode.qr_type === 'basic' ? 'Básico' : 
-                         qrCode.qr_type === 'premium' ? 'Premium' : 'Institucional'}
-                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -186,24 +177,58 @@ export const QRList: React.FC<QRListProps> = ({
                          qrCode.status}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {qrCode.status === 'active' ? (
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 text-green-600 mr-2" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {qrCode.pet?.name || 'Mascota sin nombre'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Dueño: {qrCode.owner?.first_name} {qrCode.owner?.last_name}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">Sin asignar</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {qrCode.sold_by_branch_id ? (
+                        <div className="flex items-center">
+                          <Store className="h-4 w-4 text-blue-600 mr-2" />
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {qrCode.assigned_branch?.name || 'Comercio'}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {qrCode.assigned_branch?.city || 'Ciudad'}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          <span className="text-sm text-gray-400 mr-2">Sin asignar</span>
+                          <button className="inline-flex items-center px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                            <Link className="h-3 w-3 mr-1" />
+                            Asignar
+                          </button>
+                        </div>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {qrCode.scan_count || 0}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Calendar className="h-4 w-4 mr-2" />
-                        {new Date(qrCode.created_at).toLocaleDateString()}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-500">
+                        <div>{new Date(qrCode.created_at).toLocaleDateString()}</div>
+                        {qrCode.activation_date && (
+                          <div className="text-xs text-green-600">
+                            Activado: {new Date(qrCode.activation_date).toLocaleDateString()}
+                          </div>
+                        )}
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {qrCode.activation_date ? (
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-2 text-green-600" />
-                          {new Date(qrCode.activation_date).toLocaleDateString()}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">Sin activar</span>
-                      )}
                     </td>
                     {showActions && (
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -211,17 +236,10 @@ export const QRList: React.FC<QRListProps> = ({
                           {onView && (
                             <button
                               onClick={() => onView(qrCode)}
-                              className="text-blue-600 hover:text-blue-900"
+                              className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
+                              title="Ver detalles"
                             >
                               <Eye className="h-4 w-4" />
-                            </button>
-                          )}
-                          {onEdit && (
-                            <button
-                              onClick={() => onEdit(qrCode)}
-                              className="text-green-600 hover:text-green-900"
-                            >
-                              Editar
                             </button>
                           )}
                         </div>
