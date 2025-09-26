@@ -10,6 +10,14 @@ export const AFPetsLogo: React.FC<AFPetsLogoProps> = ({
   alt = "AFPets Logo" 
 }) => {
   return (
-    <img src="/afpets-7.webp" alt={alt} className={className} />
+    <img 
+      src="/afpets-7.webp" 
+      alt={alt} 
+      className={className}
+      onError={(e) => {
+        console.error('Logo failed to load');
+        e.currentTarget.style.display = 'none';
+      }}
+    />
   );
 };
