@@ -25,13 +25,15 @@ export const useQRCodes = (filters?: QRFilters) => {
           last_scan_location,
           purchase_date,
           sold_by_branch_id,
+          assigned_branch_id,
+          assigned_company_id,
           is_printed,
           first_printed_at,
           last_printed_at,
           print_count,
+          metadata,
           created_at,
-          updated_at,
-          qr_scans(count)
+          updated_at
         `)
         .order('created_at', { ascending: false });
 
@@ -57,17 +59,13 @@ export const useQRCodes = (filters?: QRFilters) => {
         query = query.eq('is_printed', filters.is_printed);
       }
 
-      const { data, error } = await query;
+      const { data, error: fetchError } = await query;
       
-      if (error) throw error;
+      if (fetchError) throw fetchError;
       
-      // Calcular scan_count real desde qr_scans
-      const processedData = (data || []).map(qr => ({
-        ...qr,
-        scan_count: qr.qr_scans?.[0]?.count || 0
-      }));
+      // Scan count ya viene en la tabla
+      const processedData = data || [];
       
-      console.log('✅ QR Codes cargados:', data?.length || 0);
       return processedData as QRCode[];
     },
     enabled: !!supabase,
@@ -84,7 +82,7 @@ export const useQRCode = (id: string) => {
           *,
           pet:pets(name, species, breed),
           owner:user_profiles(first_name, last_name, email, phone),
-          assigned_branch:branches(name, city, company:companies(name)),
+          assigned_company:companies(name, city, type),
           scans:qr_scans(*)
         `)
         .eq('id', id)
@@ -155,12 +153,12 @@ export const useCreateQRs = () => {
         });
       }
 
-      const { data, error } = await supabase
+      const { data, error: insertError } = await supabase
         .from('qr_codes')
         .insert(qrCodes)
         .select();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
       return data;
     },
     onSuccess: () => {
@@ -183,7 +181,7 @@ export const useCreatePrintBatch = () => {
         .update({
           is_printed: true,
           print_batch_number: batchNumber,
-          printed_at: new Date().toISOString(),
+          last_printed_at: new Date().toISOString(),
           status: 'printed',
           metadata: supabase.raw(`metadata || '{"print_notes": "${printData.notes || ''}"}'::jsonb`)
         })
@@ -199,24 +197,24 @@ export const useCreatePrintBatch = () => {
   });
 };
 
-export const useAssignToBranch = () => {
+export const useAssignToCompany = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (assignData: AssignToBranchData) => {
-      // Asignar QRs al comercio
+      // Asignar QRs al comercio (S-Pet)
       const { data, error } = await supabase
         .from('qr_codes')
         .update({
-          assigned_branch_id: assignData.branch_id,
+          assigned_company_id: assignData.branch_id, // reuse branch_id input param
           assigned_at: new Date().toISOString(),
           status: 'assigned',
-          metadata: supabase.raw(`metadata || '{"assignment_notes": "${assignData.notes || ''}"}'::jsonb`)
+          metadata: { assignment_notes: assignData.notes || '' } // Overwriting metadata for now to avoid supabase.raw error
         })
         .in('id', assignData.qr_ids)
         .select(`
           *,
-          assigned_branch:branches(*)
+          assigned_company:companies(*)
         `);
 
       if (error) throw error;
@@ -237,7 +235,7 @@ export const useMarkAsPrinted = () => {
         .from('qr_codes')
         .update({
           is_printed: true,
-          printed_at: new Date().toISOString(),
+          last_printed_at: new Date().toISOString(),
           status: 'printed'
         })
         .in('id', qrIds)
@@ -330,7 +328,10 @@ export const useRecordQRScan = () => {
         .select()
         .single();
 
-      if (scanError) throw scanError;
+      if (scanError) {
+        console.error('Error recording scan:', scanError);
+        throw scanError;
+      }
 
       // Actualizar contador de escaneos manualmente
       const { data: currentQR, error: qrError } = await supabase
@@ -350,7 +351,10 @@ export const useRecordQRScan = () => {
         })
         .eq('id', scanData.qr_code_id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('Error updating scan count:', updateError);
+        throw updateError;
+      }
 
       return scanResult as QRScan;
     },
@@ -376,7 +380,7 @@ export const useQRStats = (filters?: {
       // Esta función podría ser un RPC en Supabase para mejor performance
       const { data: qrCodes, error: qrError } = await supabase
         .from('qr_codes')
-        .select('id, status, scan_count')
+        .select('id, status, scan_count, is_printed, assigned_branch_id, assigned_company_id, pet_id')
         .eq('owner_id', filters?.owner_id || '');
 
       if (qrError) throw qrError;
@@ -390,17 +394,22 @@ export const useQRStats = (filters?: {
         .order('scan_date', { ascending: false })
         .limit(10);
 
-      if (scansError) throw scansError;
+      if (scansError) {
+        console.error('Error fetching recent scans:', scansError);
+        throw scansError;
+      }
 
       const stats: QRStats = {
         total_qrs: qrCodes.length,
         printed_qrs: qrCodes.filter(qr => qr.is_printed).length,
-        assigned_qrs: qrCodes.filter(qr => qr.assigned_branch_id).length,
+        assigned_qrs: qrCodes.filter(qr => qr.assigned_company_id || qr.assigned_branch_id).length,
+        assigned_to_branch: qrCodes.filter(qr => qr.assigned_branch_id).length,
+        assigned_to_pets: qrCodes.filter(qr => qr.pet_id).length,
+        active_subscriptions: 0,
         active_qrs: qrCodes.filter(qr => qr.status === 'active').length,
         inactive_qrs: qrCodes.filter(qr => qr.status === 'inactive').length,
         total_scans: qrCodes.reduce((sum, qr) => sum + qr.scan_count, 0),
         pets_found: qrCodes.filter(qr => qr.status === 'found').length,
-        active_subscriptions: 0, // TODO: Implementar cuando tengamos subscriptions
         recent_scans: recentScans || []
       };
 
@@ -417,7 +426,7 @@ export const useRegisterQRPrint = () => {
       qr_code_id: string;
       print_reason?: string;
       print_quality?: string;
-      printer_info?: Record<string, any>;
+      printer_info?: Record<string, unknown>;
       notes?: string;
     }) => {
       // Insertar en historial de impresión
@@ -433,19 +442,25 @@ export const useRegisterQRPrint = () => {
         .select()
         .single();
 
-      if (historyError) throw historyError;
+      if (historyError) {
+        console.error('Error al insertar historial de impresión:', historyError);
+        throw historyError;
+      }
 
       // Actualizar campos de impresión en qr_codes
       const now = new Date().toISOString();
-      const { data: qrData, error: qrError } = await supabase
+      const { data: qrData, error: fetchError } = await supabase
         .from('qr_codes')
         .select('is_printed, print_count')
         .eq('id', printData.qr_code_id)
         .single();
 
-      if (qrError) throw qrError;
+      if (fetchError) {
+        console.error('Error al obtener datos del QR para impresión:', fetchError);
+        throw fetchError;
+      }
 
-      const updateData: any = {
+      const updateData: Partial<QRCode> = {
         is_printed: true,
         last_printed_at: now,
         print_count: (qrData.print_count || 0) + 1
@@ -456,15 +471,18 @@ export const useRegisterQRPrint = () => {
         updateData.first_printed_at = now;
       }
 
-      const { data, error } = await supabase
+      const { data: updatedQR, error: updateError } = await supabase
         .from('qr_codes')
         .update(updateData)
         .eq('id', printData.qr_code_id)
         .select()
         .single();
 
-      if (error) throw error;
-      return { qr_code: data, print_history: historyData };
+      if (updateError) {
+        console.error('Error al actualizar datos de impresión del QR:', updateError);
+        throw updateError;
+      }
+      return { qr_code: updatedQR, print_history: historyData };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['qr-codes'] });

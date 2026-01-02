@@ -15,7 +15,8 @@ export interface QRCode {
   last_printed_at: string | null;
   print_count: number;
   
-  sold_by_branch_id: string | null;
+  assigned_company_id: string | null;
+
   
   metadata: Record<string, any>;
   created_at: string;
@@ -24,7 +25,8 @@ export interface QRCode {
   // Relaciones
   pets?: { name: string; species: string; breed: string | null };
   user_profiles?: { first_name: string | null; last_name: string | null; email: string };
-  branches?: { name: string; city: string | null; company_id: string; companies: { name: string } };
+
+  assigned_company?: { name: string; city: string | null; type: string };
   scans?: QRScan[];
   print_history?: QRPrintHistory[];
 }
@@ -35,7 +37,7 @@ export interface QRPrintHistory {
   printed_by: string | null;
   print_reason: string;
   print_quality: string;
-  printer_info: Record<string, any>;
+  printer_info: Record<string, unknown>;
   notes: string | null;
   printed_at: string;
   created_at: string;
@@ -54,7 +56,7 @@ export interface Subscription {
   user_id: string;
   monthly_price: number;
   commission_rate: number;
-  branch_id: string | null;
+
   status: 'active' | 'paused' | 'cancelled' | 'expired';
   start_date: string;
   end_date: string | null;
@@ -68,7 +70,7 @@ export interface Subscription {
   // Relaciones
   qr_code?: QRCode;
   user_profiles?: { first_name: string | null; last_name: string | null };
-  branches?: { name: string; city: string | null };
+
 }
 
 export interface QRScan {
@@ -101,17 +103,18 @@ export interface PrintBatch {
   created_by_user?: { first_name: string | null; last_name: string | null };
 }
 
-export interface BranchAssignment {
+// BranchAssignment interface removed, logic moved to CompanyAssignment
+// Or if we need a company assignment interface:
+export interface CompanyAssignment {
   id: string;
-  branch_id: string;
-  qr_codes: string[]; // Array de IDs de QR
+  company_id: string;
+  qr_codes: string[];
   quantity: number;
   assigned_by: string;
   assigned_at: string;
   notes: string | null;
   
-  // Relaciones
-  branches?: { name: string; city: string | null };
+  assigned_company?: { name: string; city: string | null };
   assigned_by_user?: { first_name: string | null; last_name: string | null };
 }
 
@@ -119,8 +122,11 @@ export interface QRStats {
   total_qrs: number;
   active_qrs: number;
   inactive_qrs: number;
-  assigned_to_branch: number;
+  printed_qrs: number;
+  assigned_qrs: number;
+
   assigned_to_pets: number;
+  active_subscriptions: number;
   total_scans: number;
   pets_found: number;
   recent_scans: QRScan[];
@@ -133,6 +139,7 @@ export type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired';
 // Interfaces para formularios
 export interface CreateQRData {
   quantity: number;
+  qr_type: 'basic' | 'premium' | 'institutional';
   notes?: string;
 }
 
@@ -140,7 +147,7 @@ export interface RegisterPrintData {
   qr_code_ids: string[];
   print_reason?: string;
   print_quality?: string;
-  printer_info?: Record<string, any>;
+  printer_info?: Record<string, unknown>;
   notes?: string;
 }
 
@@ -149,27 +156,31 @@ export interface CreatePrintBatchData {
   notes?: string;
 }
 
-export interface AssignToBranchData {
-  branch_id: string;
+export interface AssignToCompanyData {
+  company_id: string;
   qr_ids: string[];
   notes?: string;
 }
+
+
+
 
 export interface UpdateQRData {
   pet_id?: string | null;
   owner_id?: string | null;
   status?: QRStatus;
-  sold_by_branch_id?: string | null;
-  metadata?: Record<string, any>;
+
+  metadata?: Record<string, unknown>;
 }
 
 export interface QRFilters {
   status?: QRStatus;
   owner_id?: string;
-  sold_by_branch_id?: string;
+
   search?: string;
   date_from?: string;
   date_to?: string;
+  assigned_company_id?: string;
   is_printed?: boolean;
 }
 

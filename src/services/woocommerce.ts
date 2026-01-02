@@ -5,7 +5,7 @@ import { Product, ProductCategory, Order, Cart } from '../types/product';
 const WC_API_BASE_URL = import.meta.env.VITE_WC_API_BASE_URL || 'https://shop.afpets.com/wp-json/wc/v3';
 const WC_CONSUMER_KEY = import.meta.env.VITE_WC_CONSUMER_KEY || 'ck_72d9441104adb4f5fbfe9ae3cb2da5847b2bf5a3';
 const WC_CONSUMER_SECRET = import.meta.env.VITE_WC_CONSUMER_SECRET || 'cs_1380cb1668ca1ca58ae9aa9fac6de571f1092e70';
-const WP_AUTH_METHOD = import.meta.env.VITE_WP_AUTH_METHOD || 'wc_keys';
+// export const WP_AUTH_METHOD = ... (removed unused variable)
 
 // Validar configuración
 if (!WC_API_BASE_URL || !WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) {
@@ -41,9 +41,9 @@ wcApi.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
+  (err) => {
     // Error silencioso para evitar spam en consola
-    return Promise.reject(error);
+    return Promise.reject(err);
   }
 );
 
@@ -51,9 +51,9 @@ export class WooCommerceAPI {
   // Método para probar la conexión
   static async testConnection(): Promise<boolean> {
     try {
-      const response = await wcApi.get('/products', { params: { per_page: 1 } });
+      await wcApi.get('/products', { params: { per_page: 1 } });
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }
@@ -68,7 +68,7 @@ export class WooCommerceAPI {
   }): Promise<Product[]> {
     try {
       // Preparar parámetros de la consulta
-      const queryParams: any = {
+      const queryParams: Record<string, unknown> = {
         per_page: params?.per_page || 12,
         page: params?.page || 1,
         status: 'publish',
@@ -156,8 +156,9 @@ export class WooCommerceAPI {
     try {
       const response = await wcApi.post('/orders', orderData);
       return response.data;
-    } catch (error) {
-      throw error;
+    } catch (err: unknown) {
+      console.error('Error creating WooCommerce order:', err);
+      throw err;
     }
   }
 
@@ -185,7 +186,7 @@ export class WooCommerceAPI {
       
       localStorage.setItem('afpets_cart', JSON.stringify(cart));
       return cart;
-    } catch (error) {
+    } catch {
       return this.getCartFromStorage();
     }
   }
@@ -201,7 +202,7 @@ export class WooCommerceAPI {
         shipping_total: 0,
         tax_total: 0
       };
-    } catch (error) {
+    } catch {
       return {
         items: [],
         item_count: 0,

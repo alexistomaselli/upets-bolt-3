@@ -23,3 +23,13 @@ dist-ssr
 *.sln
 *.sw?
 .env
+.env*.local
+
+# Local scripts and data
+create-admin-user.js
+create-user.js
+generate-supabase-activity.js
+scripts/
+sql_backups/
+supabase/.temp/
+supabase/.branches/

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase';
-import { Company, Branch, CompanyUser, CompanyType, CompanyStatus } from '../../types/company';
+import { Company, CompanyUser, CompanyType, CompanyStatus } from '../../types/company';
 
 export const useCompanies = (filters?: {
   type?: CompanyType;
@@ -30,8 +29,13 @@ export const useCompanies = (filters?: {
         query = query.or(`name.ilike.%${filters.search}%,business_type.ilike.%${filters.search}%`);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data, error: fetchError } = await query;
+      
+      if (fetchError) {
+        console.error('Error fetching companies:', fetchError);
+        throw fetchError;
+      }
+
       return data as Company[];
     },
   });
@@ -41,11 +45,12 @@ export const useCompany = (id: string) => {
   return useQuery({
     queryKey: ['company', id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('companies')
         .select('*')
-      if (error) throw error;
-      return data as Company;
+        .eq('id', id);
+      if (fetchError) throw fetchError;
+      return data?.[0] as Company;
     },
     enabled: !!id,
   });
@@ -68,6 +73,10 @@ export const useCreateCompany = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['companies'] });
     },
+    onError: (err: Error) => {
+      console.error('Mutation error:', err);
+      alert('Error de mutación: ' + err.message);
+    }
   });
 };
 
@@ -76,14 +85,18 @@ export const useUpdateCompany = () => {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Company> }) => {
-      const { data, error } = await supabase
+      const { data, error: updateError } = await supabase
         .from('companies')
         .update(updates)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (updateError) {
+        console.error('Error updating company:', updateError);
+        throw updateError;
+      }
+
       return data as Company;
     },
     onSuccess: (data) => {
@@ -93,73 +106,37 @@ export const useUpdateCompany = () => {
   });
 };
 
-export const useBranches = (companyId?: string) => {
-  return useQuery({
-    queryKey: ['branches', companyId],
-    queryFn: async () => {
-      if (!supabase) return [];
-      
-      let query = supabase
-        .from('branches')
-        .select('id, company_id, name, code, email, phone, address, city, state, postal_code, status, created_at')
-        .order('created_at', { ascending: false });
 
-      if (companyId) {
-        query = query.eq('company_id', companyId);
-      }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as Branch[];
-    },
-    enabled: !!supabase,
-  });
-};
-
-export const useCreateBranch = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (branchData: Partial<Branch>) => {
-      const { data, error } = await supabase
-        .from('branches')
-        .insert([branchData])
-        .select(`
-          *,
-          company:companies(*)
-        `)
-        .single();
-
-      if (error) throw error;
-      return data as Branch;
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['branches'] });
-      queryClient.invalidateQueries({ queryKey: ['branches', data.company_id] });
-    },
-  });
-};
 
 export const useCompanyUsers = (companyId?: string) => {
   return useQuery({
     queryKey: ['company-users', companyId],
     queryFn: async () => {
-      let query = supabase
-        .from('company_users')
-        .select(`
-          *,
-          company:companies(*),
-          branch:branches(*)
-        `)
-        .order('assigned_at', { ascending: false });
+      try {
+        // Evitamos la recursión infinita seleccionando solo los campos necesarios de companies
+        // en lugar de todos los campos con (*)
+        let query = supabase
+          .from('company_users')
+          .select(`
+            *,
+            company:companies(id, name, type, status)
+          `)
+          .order('assigned_at', { ascending: false });
 
-      if (companyId) {
-        query = query.eq('company_id', companyId);
+        if (companyId) {
+          query = query.eq('company_id', companyId);
+        }
+
+        const { data, error: usersError } = await query;
+        if (usersError) {
+          console.error('Error fetching company users:', usersError);
+          throw usersError;
+        }
+        return data as CompanyUser[];
+      } catch (err: unknown) {
+        console.error('Error in useCompanyUsers:', err);
+        return [] as CompanyUser[]; // Retornamos un array vacío en caso de error
       }
-
-      const { data, error } = await query;
-      if (error) throw error;
-      return data as CompanyUser[];
     },
   });
 };
@@ -169,18 +146,25 @@ export const useAssignUserToCompany = () => {
 
   return useMutation({
     mutationFn: async (assignment: Partial<CompanyUser>) => {
-      const { data, error } = await supabase
-        .from('company_users')
-        .insert([assignment])
-        .select(`
-          *,
-          company:companies(*),
-          branch:branches(*)
-        `)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('company_users')
+          .insert([assignment])
+          .select(`
+            *,
+            company:companies(id, name, type, status)
+          `)
+          .single();
 
-      if (error) throw error;
-      return data as CompanyUser;
+        if (error) {
+          console.error('Error assigning user to company:', error);
+          throw error;
+        }
+        return data as CompanyUser;
+      } catch (err: unknown) { // Changed 'error' to 'err' and added 'unknown' type
+        console.error('Error al asignar usuario a la empresa:', err); // Updated message
+        throw err;
+      }
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['company-users'] });
