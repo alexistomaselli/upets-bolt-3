@@ -21,4 +21,5 @@ export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 
 export { ConfirmDialog } from './ConfirmDialog';
-export type { ConfirmDialogProps } from './ConfirmDialog';
+
+export { TableSkeleton } from './TableSkeleton';

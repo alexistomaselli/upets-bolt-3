@@ -14,19 +14,37 @@ Ser la plataforma líder en Latinoamérica que conecte a todos los actores del m
 
 ## 📈 **EVOLUCIÓN DEL PROYECTO**
 
-### **FASE 1: MVP - QR + IA (2025 Q1) ✅**
-**Estado**: Implementado al 90%
+### **FASE 1: MVP - QR + IA (2025 Q1) 🚧**
+**Estado**: En desarrollo
 
 **Productos**:
 - Colgantes QR inteligentes para identificación
 - Covers decorativos intercambiables
-- Agente IA veterinario por WhatsApp
+- Agente IA veterinario por WhatsApp (desarrollado con n8n)
 
 **Funcionalidades**:
 - Sistema de identificación por QR
 - Consultas veterinarias por IA 24/7
 - E-commerce para venta de productos
 - Dashboard para usuarios y comercios
+
+**Módulos del MVP (U-Pets)**:
+- Módulo de usuarios, roles y permisos
+- Gestión de QRs (panel super_admin)
+- Gestión de mascotas
+- Gestión de clientes
+- Gestión de suscripciones
+
+**Flujo de trabajo**:
+1. El super_admin gestiona QRs (inicialmente inactivos)
+2. Los QRs se entregan a comercios para su venta
+3. Cuando un cliente adquiere un QR:
+   - Lo escanea y si está inactivo, inicia el proceso de registro
+   - Se registra con sus datos personales (nombre, email, domicilio, WhatsApp)
+   - Registra a su mascota
+   - Se suscribe al plan pagando la primera cuota
+4. El QR queda asociado al cliente y su mascota, con relación al comercio que lo vendió
+5. El comercio recibe comisiones mensuales por la venta del servicio
 
 ### **FASE 2: DISPOSITIVOS INTELIGENTES (2025 Q3-Q4)**
 **Estado**: Planificado

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Helmet } from 'react-helmet';
+import { Helmet } from 'react-helmet-async';
 
 interface SocialMetaTagsProps {
   title?: string;
@@ -26,13 +26,13 @@ export const SocialMetaTags: React.FC<SocialMetaTagsProps> = ({
       <meta property="og:type" content={type} />
       <meta property="og:site_name" content="AFPets" />
       <meta property="og:locale" content="es_ES" />
-      
+
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
-      
+
       {/* WhatsApp Preview */}
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
