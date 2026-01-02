@@ -44,9 +44,6 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
         },
         errorCorrectionLevel: 'M'
       });
-
-      // Agregar logo de AFPets en el centro
-      await addLogoToQR();
       
       // Generar URL para descarga
       const dataUrl = canvasRef.current.toDataURL('image/png');
@@ -56,68 +53,7 @@ export const QRPreview: React.FC<QRPreviewProps> = ({
     }
   };
 
-  const addLogoToQR = async () => {
-    if (!canvasRef.current) return;
 
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    try {
-      // Cargar logo real de AFPets
-      const logoImg = new Image();
-      logoImg.crossOrigin = 'anonymous';
-      
-      await new Promise((resolve, reject) => {
-        logoImg.onload = resolve;
-        logoImg.onerror = reject;
-        logoImg.src = '/afpets-7.webp';
-      });
-
-      const logoSize = size * 0.2; // 20% del tamaño del QR
-      const logoX = (size - logoSize) / 2;
-      const logoY = (size - logoSize) / 2;
-
-      // Fondo blanco circular para el logo
-      ctx.fillStyle = '#FFFFFF';
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2 + 4, 0, 2 * Math.PI);
-      ctx.fill();
-      
-      // Borde circular
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-
-      // Dibujar logo real
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(logoX + logoSize / 2, logoY + logoSize / 2, logoSize / 2, 0, 2 * Math.PI);
-      ctx.clip();
-      ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize);
-      ctx.restore();
-    } catch (error) {
-      console.error('Error agregando logo real, usando fallback:', error);
-      // Fallback: texto simple si no se puede cargar la imagen
-      const logoSize = size * 0.15;
-      const logoX = (size - logoSize) / 2;
-      const logoY = (size - logoSize) / 2;
-
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
-      
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(logoX - 4, logoY - 4, logoSize + 8, logoSize + 8);
-
-      ctx.fillStyle = '#000000';
-      ctx.font = `bold ${logoSize * 0.2}px Arial`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('AF', logoX + logoSize / 2, logoY + logoSize / 2 - 4);
-      ctx.fillText('PETS', logoX + logoSize / 2, logoY + logoSize / 2 + 8);
-    }
-  };
 
   const handleDownload = () => {
     if (!qrUrl) return;

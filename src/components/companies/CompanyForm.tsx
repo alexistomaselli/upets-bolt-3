@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Building, Heart, Save } from 'lucide-react';
+import { ArrowLeft, Building, Heart, Save, ShoppingBag, Scissors, HelpCircle } from 'lucide-react';
+import { LocationPicker } from '../common/LocationPicker';
 import { Company, CompanyType, CompanyStatus } from '../../types/company';
 
 interface CompanyFormProps {
@@ -15,9 +16,17 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
   onCancel,
   isLoading = false,
 }) => {
+  const typeLabels: Record<CompanyType, string> = {
+    veterinary: 'Veterinaria',
+    shelter: 'Refugio',
+    pet_shop: 'Pet Shop',
+    grooming: 'Peluquería',
+    other: 'Organización',
+  };
+
   const [formData, setFormData] = useState({
     name: '',
-    type: 'commercial' as CompanyType,
+    type: 'veterinary' as CompanyType,
     business_type: '',
     tax_id: '',
     email: '',
@@ -33,13 +42,14 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
     payment_terms: '',
     status: 'pending' as CompanyStatus,
     notes: '',
+    metadata: {} as Record<string, any>,
   });
 
   useEffect(() => {
     if (company) {
       setFormData({
         name: company.name || '',
-        type: company.type || 'commercial',
+        type: company.type || 'veterinary',
         business_type: company.business_type || '',
         tax_id: company.tax_id || '',
         email: company.email || '',
@@ -55,13 +65,24 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         payment_terms: company.payment_terms || '',
         status: company.status || 'pending',
         notes: company.notes || '',
+        metadata: company.metadata || {},
       });
     }
   }, [company]);
 
+
+
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+    setError(null);
+    try {
+      await onSubmit(formData);
+    } catch (err) {
+      console.error('Error submitting form:', err);
+      setError((err as Error).message || 'Error al guardar');
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -69,6 +90,21 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
     setFormData(prev => ({
       ...prev,
       [name]: type === 'number' ? parseFloat(value) || 0 : value,
+    }));
+  };
+
+  const handleLocationSelect = (lat: number, lng: number, address?: string, city?: string, state?: string, postalCode?: string) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address || prev.address,
+      city: city || prev.city,
+      state: state || prev.state,
+      postal_code: postalCode || prev.postal_code,
+      metadata: {
+        ...prev.metadata,
+        latitude: lat,
+        longitude: lng
+      }
     }));
   };
 
@@ -84,10 +120,10 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         </button>
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            {company ? 'Editar' : 'Nuevo'} {formData.type === 'commercial' ? 'Comercio' : 'Institución'}
+            {company ? 'Editar' : 'Nuevo'} {typeLabels[formData.type]}
           </h2>
           <p className="text-gray-600 mt-1">
-            {company ? 'Modifica los datos del' : 'Agrega un nuevo'} {formData.type === 'commercial' ? 'comercio' : 'institución'}
+            {company ? 'Modifica los datos de la' : 'Agrega una nueva'} {typeLabels[formData.type].toLowerCase()}
           </p>
         </div>
       </div>
@@ -99,48 +135,104 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
             <label className="block text-sm font-medium text-gray-700 mb-3">
               Tipo de Organización
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.type === 'commercial' 
-                  ? 'border-blue-500 bg-blue-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === 'veterinary'
+                ? 'border-blue-500 bg-blue-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}>
                 <input
                   type="radio"
                   name="type"
-                  value="commercial"
-                  checked={formData.type === 'commercial'}
+                  value="veterinary"
+                  checked={formData.type === 'veterinary'}
                   onChange={handleChange}
                   className="sr-only"
                 />
-                <Building className={`h-6 w-6 mr-3 ${
-                  formData.type === 'commercial' ? 'text-blue-600' : 'text-gray-400'
-                }`} />
+                <Building className={`h-6 w-6 mr-3 ${formData.type === 'veterinary' ? 'text-blue-600' : 'text-gray-400'
+                  }`} />
                 <div>
-                  <div className="font-medium text-gray-900">Comercio</div>
-                  <div className="text-sm text-gray-600">Veterinarias, pet shops, etc.</div>
+                  <div className="font-medium text-gray-900">Veterinaria</div>
+                  <div className="text-sm text-gray-600">Clínica y atención</div>
                 </div>
               </label>
 
-              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                formData.type === 'institution' 
-                  ? 'border-pink-500 bg-pink-50' 
-                  : 'border-gray-300 hover:border-gray-400'
-              }`}>
+              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === 'shelter'
+                ? 'border-pink-500 bg-pink-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}>
                 <input
                   type="radio"
                   name="type"
-                  value="institution"
-                  checked={formData.type === 'institution'}
+                  value="shelter"
+                  checked={formData.type === 'shelter'}
                   onChange={handleChange}
                   className="sr-only"
                 />
-                <Heart className={`h-6 w-6 mr-3 ${
-                  formData.type === 'institution' ? 'text-pink-600' : 'text-gray-400'
-                }`} />
+                <Heart className={`h-6 w-6 mr-3 ${formData.type === 'shelter' ? 'text-pink-600' : 'text-gray-400'
+                  }`} />
                 <div>
-                  <div className="font-medium text-gray-900">Institución</div>
-                  <div className="text-sm text-gray-600">Refugios, protectoras, ONGs</div>
+                  <div className="font-medium text-gray-900">Refugio</div>
+                  <div className="text-sm text-gray-600">Adopción y cuidado</div>
+                </div>
+              </label>
+
+              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === 'pet_shop'
+                ? 'border-green-500 bg-green-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}>
+                <input
+                  type="radio"
+                  name="type"
+                  value="pet_shop"
+                  checked={formData.type === 'pet_shop'}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+                <ShoppingBag className={`h-6 w-6 mr-3 ${formData.type === 'pet_shop' ? 'text-green-600' : 'text-gray-400'
+                  }`} />
+                <div>
+                  <div className="font-medium text-gray-900">Pet Shop</div>
+                  <div className="text-sm text-gray-600">Venta de productos</div>
+                </div>
+              </label>
+
+              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === 'grooming'
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}>
+                <input
+                  type="radio"
+                  name="type"
+                  value="grooming"
+                  checked={formData.type === 'grooming'}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+                <Scissors className={`h-6 w-6 mr-3 ${formData.type === 'grooming' ? 'text-purple-600' : 'text-gray-400'
+                  }`} />
+                <div>
+                  <div className="font-medium text-gray-900">Peluquería</div>
+                  <div className="text-sm text-gray-600">Estética animal</div>
+                </div>
+              </label>
+
+              <label className={`relative flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${formData.type === 'other'
+                ? 'border-gray-500 bg-gray-50'
+                : 'border-gray-300 hover:border-gray-400'
+                }`}>
+                <input
+                  type="radio"
+                  name="type"
+                  value="other"
+                  checked={formData.type === 'other'}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+                <HelpCircle className={`h-6 w-6 mr-3 ${formData.type === 'other' ? 'text-gray-600' : 'text-gray-400'
+                  }`} />
+                <div>
+                  <div className="font-medium text-gray-900">Otro</div>
+                  <div className="text-sm text-gray-600">Otro tipo de servicio</div>
                 </div>
               </label>
             </div>
@@ -173,7 +265,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
                 value={formData.business_type}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder={formData.type === 'commercial' ? 'Veterinaria, Pet Shop, etc.' : 'Refugio, Protectora, etc.'}
+                placeholder="Ej: Clínica 24hs, Venta de Alimento, etc."
               />
             </div>
 
@@ -238,6 +330,19 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
           {/* Dirección */}
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Dirección</h3>
+
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Ubicación
+              </label>
+              <LocationPicker
+                initialLat={formData.metadata?.latitude}
+                initialLng={formData.metadata?.longitude}
+                onLocationSelect={handleLocationSelect}
+              />
+              <p className="mt-1 text-xs text-gray-500">Selecciona la ubicación exacta en el mapa para completar los datos automáticamente.</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -332,7 +437,7 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  {formData.type === 'institution' ? 'Comisión reducida para instituciones' : 'Comisión estándar para comercios'}
+                  {formData.type === 'shelter' ? 'Comisión reducida para refugios' : 'Comisión estándar'}
                 </p>
               </div>
 
@@ -388,26 +493,33 @@ export const CompanyForm: React.FC<CompanyFormProps> = ({
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end space-x-4">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {isLoading ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            {company ? 'Actualizar' : 'Crear'} {formData.type === 'commercial' ? 'Comercio' : 'Institución'}
-          </button>
+        <div className="flex flex-col items-end space-y-4">
+          {error && (
+            <div className="text-red-600 bg-red-50 px-4 py-2 rounded-lg text-sm font-medium w-full text-center">
+              {error}
+            </div>
+          )}
+          <div className="flex items-center justify-end space-x-4">
+            <button
+              type="button"
+              onClick={onCancel}
+              className="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="inline-flex items-center px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+              ) : (
+                <Save className="h-4 w-4 mr-2" />
+              )}
+              {company ? 'Actualizar' : 'Crear'} {typeLabels[formData.type]}
+            </button>
+          </div>
         </div>
       </form>
     </div>

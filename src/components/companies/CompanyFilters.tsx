@@ -18,7 +18,7 @@ export const CompanyFilters: React.FC<CompanyFiltersProps> = ({
   resultCount,
 }) => {
   const handleFilterChange = (key: string, value: string) => {
-    onFiltersChange(prev => ({ ...prev, [key]: value }));
+    onFiltersChange((prev: { type: CompanyType | ''; status: CompanyStatus | ''; search: string }) => ({ ...prev, [key]: value }));
   };
 
   return (
@@ -41,8 +41,11 @@ export const CompanyFilters: React.FC<CompanyFiltersProps> = ({
           className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
         >
           <option value="">Todos los tipos</option>
-          <option value="commercial">Comercios</option>
-          <option value="institution">Instituciones</option>
+          <option value="veterinary">Veterinarias</option>
+          <option value="shelter">Refugios</option>
+          <option value="pet_shop">Pet Shops</option>
+          <option value="grooming">Peluquerías</option>
+          <option value="other">Otros</option>
         </select>
 
         <select

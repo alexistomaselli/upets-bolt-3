@@ -54,6 +54,84 @@ export const useAuth = () => {
       return;
     }
 
+    const loadUserData = async (user: User) => {
+      // Mantener loading en true mientras se cargan los datos
+      if (mounted) {
+        // Intentar cargar desde caché para respuesta instantánea
+        const cachedProfile = localStorage.getItem(`profile_${user.id}`);
+        const cachedRoles = localStorage.getItem(`roles_${user.id}`);
+        
+        if (cachedProfile && cachedRoles) {
+          setAuthState(prev => ({
+            ...prev,
+            session: prev.session,
+            user: user,
+            profile: JSON.parse(cachedProfile),
+            roles: JSON.parse(cachedRoles),
+            loading: false, // Mostrar UI inmediatamente con datos cacheados
+          }));
+        } else {
+           setAuthState(prev => ({
+            ...prev,
+            session: prev.session,
+            user: user,
+            loading: true,
+          }));
+        }
+      }
+
+      try {
+        // Cargar perfil
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        // Cargar roles
+        let roles: UserRole[] = [];
+        try {
+          // Remover console.time para producción
+          const { data: rolesData } = await supabase
+            .rpc('get_user_roles', { user_uuid: user.id });
+          
+          roles = (rolesData || []).map(r => ({
+            role_name: r.role_name,
+            role_level: r.role_level
+          }));
+          
+        } catch (rolesError) {
+          console.warn('⚠️ Error cargando roles:', rolesError);
+          roles = [];
+        }
+
+        if (mounted) {
+          // Guardar en caché
+          if (profile) localStorage.setItem(`profile_${user.id}`, JSON.stringify(profile));
+          if (roles.length > 0) localStorage.setItem(`roles_${user.id}`, JSON.stringify(roles));
+
+          setAuthState(prev => ({
+            ...prev,
+            profile: profile || null,
+            roles: roles,
+            loading: false, // Ahora sí terminamos de cargar todo
+          }));
+        }
+
+      } catch (error) {
+        console.error('❌ Error cargando datos de usuario:', error);
+        if (mounted) {
+          setAuthState(prev => ({
+            ...prev,
+            profile: null,
+            roles: [],
+            loading: false, // Terminar loading incluso si hay error
+          }));
+        }
+      }
+    };
+
+
     const initializeAuth = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -73,11 +151,9 @@ export const useAuth = () => {
         
 
         if (session?.user) {
-          console.log('✅ Usuario encontrado:', session.user.email);
           // Cargar datos del usuario de forma no bloqueante
           loadUserData(session.user);
         } else {
-          console.log('ℹ️ Sin sesión activa');
           setAuthState(prev => ({
             ...prev,
             session,
@@ -103,72 +179,13 @@ export const useAuth = () => {
       }
     };
 
-    const loadUserData = async (user: User) => {
-      // Primero establecer el usuario para que no se quede en loading
-      if (mounted) {
-        setAuthState(prev => ({
-          ...prev,
-          session: prev.session,
-          user: user,
-          loading: false, // Importante: marcar como no loading inmediatamente
-        }));
-      }
 
-      try {
-        console.log('🔍 Cargando perfil para:', user.email);
-        // Cargar perfil
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-
-        console.log('👤 Perfil cargado:', profile?.first_name, profile?.last_name);
-
-        // Cargar roles
-        let roles: UserRole[] = [];
-        try {
-          console.log('🔍 Cargando roles...');
-          const { data: rolesData } = await supabase
-            .rpc('get_user_roles', { user_uuid: user.id });
-          
-          roles = (rolesData || []).map(r => ({
-            role_name: r.role_name,
-            role_level: r.role_level
-          }));
-          
-          console.log('🎭 Roles cargados:', roles);
-        } catch (rolesError) {
-          console.warn('⚠️ Error cargando roles:', rolesError);
-          roles = [];
-        }
-
-        if (mounted) {
-          setAuthState(prev => ({
-            ...prev,
-            profile: profile || null,
-            roles: roles,
-          }));
-        }
-
-      } catch (error) {
-        console.error('❌ Error cargando datos de usuario:', error);
-        if (mounted) {
-          setAuthState(prev => ({
-            ...prev,
-            profile: null,
-            roles: [],
-          }));
-        }
-      }
-    };
 
     initializeAuth();
 
     // Listener para cambios de autenticación
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth state changed:', event, session?.user?.email || 'Sin usuario');
         
         if (session?.user) {
           loadUserData(session.user);
@@ -231,7 +248,7 @@ export const useAuth = () => {
       if (error) {
         console.error('❌ Error en signIn:', error);
       } else {
-        console.log('✅ Login exitoso');
+        // Login exitoso
       }
 
       return { data, error };
@@ -248,6 +265,13 @@ export const useAuth = () => {
       }
       
       const { error } = await supabase.auth.signOut();
+      
+      // Limpiar datos al cerrar sesión
+      if (!error && authState.user) {
+         localStorage.removeItem(`profile_${authState.user.id}`);
+         localStorage.removeItem(`roles_${authState.user.id}`);
+      }
+      
       return { error };
     } catch (error) {
       console.error('Error in signOut:', error);

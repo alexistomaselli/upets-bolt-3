@@ -1,11 +1,27 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Determinar si usar Supabase local o cloud
+const useLocalSupabase = import.meta.env.VITE_USE_LOCAL_SUPABASE === 'true';
+
+// Configuración para Supabase cloud
+const cloudSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const cloudSupabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Configuración para Supabase local
+const localSupabaseUrl = import.meta.env.VITE_LOCAL_SUPABASE_URL || 'http://localhost:54321';
+const localSupabaseAnonKey = import.meta.env.VITE_LOCAL_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0';
+const localSupabaseServiceKey = import.meta.env.VITE_LOCAL_SUPABASE_SERVICE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImV4cCI6MTk4MzgxMjk5Nn0.EGIM96RAZx35lJzdJsyH-qQwv8Hdp7fsn3W0YpN81IU';
+
+// Seleccionar la configuración según el entorno
+const supabaseUrl = useLocalSupabase ? localSupabaseUrl : cloudSupabaseUrl;
+// Para desarrollo local, usamos el service_role key para evitar problemas con RLS
+const supabaseAnonKey = useLocalSupabase ? localSupabaseServiceKey : cloudSupabaseAnonKey;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('❌ Variables de entorno de Supabase no configuradas. VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas.');
+  throw new Error('❌ Variables de entorno de Supabase no configuradas. VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY son requeridas para el entorno cloud.');
 }
+
+
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -14,8 +30,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true,
     flowType: 'pkce'
   }
-}
-)
+})
 
 // Tipos para TypeScript
 export type Database = {

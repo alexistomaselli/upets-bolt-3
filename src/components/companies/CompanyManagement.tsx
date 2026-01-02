@@ -17,12 +17,13 @@ export const CompanyManagement: React.FC = () => {
       setShowForm(false);
     } catch (error) {
       console.error('Error creating company:', error);
+      throw error;
     }
   };
 
   const handleUpdateCompany = async (companyData: Partial<Company>) => {
     if (!editingCompany) return;
-    
+
     try {
       await updateCompanyMutation.mutateAsync({
         id: editingCompany.id,
@@ -32,6 +33,7 @@ export const CompanyManagement: React.FC = () => {
       setShowForm(false);
     } catch (error) {
       console.error('Error updating company:', error);
+      throw error;
     }
   };
 

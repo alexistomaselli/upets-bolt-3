@@ -19,7 +19,7 @@ export const LoginForm: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     if (!supabase) {
       setError('Supabase no está configurado. Verifica las variables de entorno.');
       setLoading(false);
@@ -28,13 +28,13 @@ export const LoginForm: React.FC = () => {
 
     try {
       const { data, error } = await signIn(email, password);
-      
+
       if (error) {
-        setError(error.message);
+        setError((error as any).message || 'Error al iniciar sesión');
         setLoading(false);
       } else if (data?.user) {
         console.log('✅ Login exitoso, redirigiendo...');
-        
+
         // Redirigir inmediatamente - el useAuth se encargará de cargar los roles
         const from = location.state?.from?.pathname;
         if (from) {
@@ -43,7 +43,7 @@ export const LoginForm: React.FC = () => {
           // Redirigir a mi-cuenta por defecto, el useAuth redirigirá a /admin si es admin
           navigate('/mi-cuenta', { replace: true });
         }
-        
+
         setLoading(false);
       }
     } catch (err) {
@@ -145,9 +145,9 @@ export const LoginForm: React.FC = () => {
             </div>
 
             <div className="text-sm">
-              <a href="#" className="font-medium text-green-600 hover:text-green-500">
+              <Link to="/recuperar-password" className="font-medium text-green-600 hover:text-green-500">
                 ¿Olvidaste tu contraseña?
-              </a>
+              </Link>
             </div>
           </div>
 

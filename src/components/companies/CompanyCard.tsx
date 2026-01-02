@@ -1,5 +1,5 @@
 import React from 'react';
-import { Building, Heart, MapPin, Phone, Mail, Edit, Trash2 } from 'lucide-react';
+import { Building, Heart, MapPin, Phone, Mail, Edit, Trash2, ShoppingBag, Scissors, HelpCircle } from 'lucide-react';
 import { Company, CompanyType, CompanyStatus } from '../../types/company';
 
 interface CompanyCardProps {
@@ -14,11 +14,23 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
   onDelete,
 }) => {
   const getTypeIcon = (type: CompanyType) => {
-    return type === 'commercial' ? Building : Heart;
+    switch (type) {
+      case 'veterinary': return Building;
+      case 'shelter': return Heart;
+      case 'pet_shop': return ShoppingBag;
+      case 'grooming': return Scissors;
+      default: return HelpCircle;
+    }
   };
 
   const getTypeLabel = (type: CompanyType) => {
-    return type === 'commercial' ? 'Comercio' : 'Institución';
+    switch (type) {
+      case 'veterinary': return 'Veterinaria';
+      case 'shelter': return 'Refugio';
+      case 'pet_shop': return 'Pet Shop';
+      case 'grooming': return 'Peluquería';
+      default: return 'Otro';
+    }
   };
 
   const getStatusColor = (status: CompanyStatus) => {
@@ -47,14 +59,18 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
     <div className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <div className={`p-3 rounded-full ${
-            company.type === 'commercial' ? 'bg-blue-100' : 'bg-pink-100'
-          }`}>
-            <TypeIcon className={`h-6 w-6 ${
-              company.type === 'commercial' ? 'text-blue-600' : 'text-pink-600'
-            }`} />
+          <div className={`p-3 rounded-full ${company.type === 'veterinary' ? 'bg-blue-100' :
+            company.type === 'shelter' ? 'bg-pink-100' :
+              company.type === 'pet_shop' ? 'bg-green-100' :
+                company.type === 'grooming' ? 'bg-purple-100' : 'bg-gray-100'
+            }`}>
+            <TypeIcon className={`h-6 w-6 ${company.type === 'veterinary' ? 'text-blue-600' :
+              company.type === 'shelter' ? 'text-pink-600' :
+                company.type === 'pet_shop' ? 'text-green-600' :
+                  company.type === 'grooming' ? 'text-purple-600' : 'text-gray-600'
+              }`} />
           </div>
-          
+
           <div>
             <div className="flex items-center space-x-3">
               <h3 className="text-lg font-semibold text-gray-900">{company.name}</h3>
@@ -65,7 +81,7 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                 {getTypeLabel(company.type)}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
               {company.business_type && (
                 <span>{company.business_type}</span>
@@ -89,9 +105,9 @@ export const CompanyCard: React.FC<CompanyCardProps> = ({
                 </div>
               )}
             </div>
-            
+
             <div className="mt-2 text-sm text-gray-500">
-              Comisión: {company.commission_rate}% • 
+              Comisión: {company.commission_rate}% •
               Creado: {new Date(company.created_at).toLocaleDateString()}
             </div>
           </div>

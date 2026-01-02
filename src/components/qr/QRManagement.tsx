@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Plus, Printer, Building, QrCode, BarChart3 } from 'lucide-react';
-import { QRCode, CreateQRData, CreatePrintBatchData, AssignToBranchData } from '../../types/qr';
-import { useQRCodes, useCreateQRs, useCreatePrintBatch, useAssignToBranch } from '../../hooks/qr/useQRCodes';
-import { useBranches } from '../../hooks/companies/useCompanies';
+import { QRCode, CreateQRData, CreatePrintBatchData, AssignToCompanyData } from '../../types/qr';
+import { useQRCodes, useCreateQRs, useCreatePrintBatch, useAssignToCompany } from '../../hooks/qr/useQRCodes';
+import { useCompanies } from '../../hooks/companies/useCompanies';
 import { QRList } from './QRList';
 import { QRStats } from './QRStats';
 import { Button, Modal, Input, Card } from '../ui';
@@ -25,17 +25,17 @@ export const QRManagement: React.FC = () => {
     notes: '',
   });
 
-  const [assignData, setAssignData] = useState<AssignToBranchData>({
-    branch_id: '',
+  const [assignData, setAssignData] = useState<AssignToCompanyData>({
+    company_id: '',
     qr_ids: [],
     notes: '',
   });
 
   const { data: qrCodes } = useQRCodes();
-  const { data: branches } = useBranches();
+  const { data: companies } = useCompanies(); // Renamed branches to companies
   const createQRsMutation = useCreateQRs();
   const createPrintBatchMutation = useCreatePrintBatch();
-  const assignToBranchMutation = useAssignToBranch();
+  const assignToCompanyMutation = useAssignToCompany(); // Renamed mutation for clarity
 
   const tabs = [
     { id: 'list', label: 'Lista de QRs', icon: QrCode },
@@ -72,17 +72,17 @@ export const QRManagement: React.FC = () => {
     }
   };
 
-  const handleAssignToBranch = async () => {
+  const handleAssignToCompany = async () => {
     try {
-      await assignToBranchMutation.mutateAsync({
+      await assignToCompanyMutation.mutateAsync({
         ...assignData,
         qr_ids: selectedQRs,
       });
       setShowAssignModal(false);
       setSelectedQRs([]);
-      setAssignData({ branch_id: '', qr_ids: [], notes: '' });
+      setAssignData({ company_id: '', qr_ids: [], notes: '' });
     } catch (error) {
-      console.error('Error assigning to branch:', error);
+      console.error('Error assigning to company:', error);
     }
   };
 
@@ -99,7 +99,7 @@ export const QRManagement: React.FC = () => {
             Administra el ciclo completo: creación → impresión → asignación → activación
           </p>
         </div>
-        <Button 
+        <Button
           onClick={() => setShowCreateModal(true)}
           icon={<Plus className="h-4 w-4" />}
         >
@@ -115,11 +115,10 @@ export const QRManagement: React.FC = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-                  activeTab === tab.id
-                    ? 'border-green-500 text-green-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                className={`flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
               >
                 <tab.icon className="h-4 w-4 mr-2" />
                 {tab.label}
@@ -130,7 +129,7 @@ export const QRManagement: React.FC = () => {
 
         <div className="p-6">
           {activeTab === 'list' && (
-            <QRList 
+            <QRList
               showActions={true}
             />
           )}
@@ -143,7 +142,7 @@ export const QRManagement: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Gestión de Impresión</h3>
-                <Button 
+                <Button
                   onClick={() => setShowPrintModal(true)}
                   disabled={selectedQRs.length === 0}
                   icon={<Printer className="h-4 w-4" />}
@@ -168,7 +167,7 @@ export const QRManagement: React.FC = () => {
                 <Card>
                   <div className="text-center">
                     <div className="text-2xl font-bold text-green-600">
-                      {qrCodes?.filter(qr => qr.assigned_branch_id).length || 0}
+                      {qrCodes?.filter(qr => qr.assigned_company_id).length || 0}
                     </div>
                     <div className="text-sm text-gray-600">QRs asignados</div>
                   </div>
@@ -177,8 +176,8 @@ export const QRManagement: React.FC = () => {
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Flujo de impresión:</strong> Selecciona QRs inactivos → Crear lote de impresión → 
-                  Los QRs pasan a estado "printed\" → Listos para asignar a comercios
+                  <strong>Flujo de impresión:</strong> Selecciona QRs inactivos → Crear lote de impresión →
+                  Los QRs pasan a estado "printed" → Listos para asignar a comercios
                 </p>
               </div>
             </div>
@@ -188,35 +187,35 @@ export const QRManagement: React.FC = () => {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Asignar a Comercios</h3>
-                <Button 
+                <Button
                   onClick={() => setShowAssignModal(true)}
                   disabled={selectedQRs.length === 0}
                   icon={<Building className="h-4 w-4" />}
                 >
-                  Asignar a Comercio ({selectedQRs.length})
+                  Asignar a S-Pet ({selectedQRs.length})
                 </Button>
               </div>
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-sm text-blue-800">
-                  <strong>Flujo de asignación:</strong> Selecciona QRs impresos → Asignar a comercio → 
-                  El comercio puede vender el servicio → Cliente activa QR y paga suscripción
+                  <strong>Flujo de asignación:</strong> Selecciona QRs impresos → Asignar a S-Pet →
+                  El S-Pet puede vender el servicio → Cliente activa QR y paga suscripción
                 </p>
               </div>
 
-              {branches && (
+              {companies && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {branches.map((branch) => (
-                    <Card key={branch.id}>
+                  {companies.map((company) => (
+                    <Card key={company.id}>
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-semibold text-gray-900">{branch.name}</h4>
-                          <p className="text-sm text-gray-600">{branch.company?.name}</p>
-                          <p className="text-sm text-gray-500">{branch.city}</p>
+                          <h4 className="font-semibold text-gray-900">{company.name}</h4>
+                          <p className="text-sm text-gray-600">{company.type}</p>
+                          <p className="text-sm text-gray-500">{company.city}</p>
                         </div>
                         <div className="text-right">
                           <div className="text-lg font-bold text-green-600">
-                            {qrCodes?.filter(qr => qr.assigned_branch_id === branch.id).length || 0}
+                            {qrCodes?.filter(qr => qr.assigned_company_id === company.id).length || 0}
                           </div>
                           <div className="text-xs text-gray-500">QRs asignados</div>
                         </div>
@@ -244,9 +243,9 @@ export const QRManagement: React.FC = () => {
             min="1"
             max="1000"
             value={createData.quantity}
-            onChange={(e) => setCreateData(prev => ({ 
-              ...prev, 
-              quantity: parseInt(e.target.value) || 1 
+            onChange={(e) => setCreateData(prev => ({
+              ...prev,
+              quantity: parseInt(e.target.value) || 1
             }))}
             helperText="Cantidad de códigos QR a generar (máximo 1000)"
           />
@@ -257,9 +256,9 @@ export const QRManagement: React.FC = () => {
             </label>
             <select
               value={createData.qr_type}
-              onChange={(e) => setCreateData(prev => ({ 
-                ...prev, 
-                qr_type: e.target.value as any 
+              onChange={(e) => setCreateData(prev => ({
+                ...prev,
+                qr_type: e.target.value as any
               }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
@@ -276,9 +275,9 @@ export const QRManagement: React.FC = () => {
             <textarea
               rows={3}
               value={createData.notes}
-              onChange={(e) => setCreateData(prev => ({ 
-                ...prev, 
-                notes: e.target.value 
+              onChange={(e) => setCreateData(prev => ({
+                ...prev,
+                notes: e.target.value
               }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Notas sobre este lote de QRs..."
@@ -293,13 +292,13 @@ export const QRManagement: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-end space-x-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowCreateModal(false)}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleCreateQRs}
               loading={createQRsMutation.isPending}
             >
@@ -330,9 +329,9 @@ export const QRManagement: React.FC = () => {
             <textarea
               rows={3}
               value={printData.notes}
-              onChange={(e) => setPrintData(prev => ({ 
-                ...prev, 
-                notes: e.target.value 
+              onChange={(e) => setPrintData(prev => ({
+                ...prev,
+                notes: e.target.value
               }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               placeholder="Instrucciones especiales para la impresión..."
@@ -340,13 +339,13 @@ export const QRManagement: React.FC = () => {
           </div>
 
           <div className="flex items-center justify-end space-x-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowPrintModal(false)}
             >
               Cancelar
             </Button>
-            <Button 
+            <Button
               onClick={handleCreatePrintBatch}
               loading={createPrintBatchMutation.isPending}
               icon={<Printer className="h-4 w-4" />}
@@ -361,34 +360,34 @@ export const QRManagement: React.FC = () => {
       <Modal
         isOpen={showAssignModal}
         onClose={() => setShowAssignModal(false)}
-        title="Asignar QRs a Comercio"
+        title="Asignar QRs a S-Pet"
         size="md"
       >
         <div className="space-y-6">
           <div className="bg-green-50 border border-green-200 rounded-lg p-4">
             <p className="text-sm text-green-800">
-              Se asignarán <strong>{selectedQRs.length}</strong> códigos QR al comercio seleccionado 
+              Se asignarán <strong>{selectedQRs.length}</strong> códigos QR al S-Pet seleccionado
               para que puedan vender el servicio.
             </p>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Comercio / Sucursal *
+              S-Pet / Sucursal *
             </label>
             <select
-              value={assignData.branch_id}
-              onChange={(e) => setAssignData(prev => ({ 
-                ...prev, 
-                branch_id: e.target.value 
+              value={assignData.company_id}
+              onChange={(e) => setAssignData(prev => ({
+                ...prev,
+                company_id: e.target.value
               }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               required
             >
               <option value="">Seleccionar comercio...</option>
-              {branches?.map((branch) => (
-                <option key={branch.id} value={branch.id}>
-                  {branch.name} - {branch.company?.name} ({branch.city})
+              {companies?.map((company) => (
+                <option key={company.id} value={company.id}>
+                  {company.name} {company.city ? `(${company.city})` : ''}
                 </option>
               ))}
             </select>
@@ -401,29 +400,29 @@ export const QRManagement: React.FC = () => {
             <textarea
               rows={3}
               value={assignData.notes}
-              onChange={(e) => setAssignData(prev => ({ 
-                ...prev, 
-                notes: e.target.value 
+              onChange={(e) => setAssignData(prev => ({
+                ...prev,
+                notes: e.target.value
               }))}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              placeholder="Instrucciones o notas para el comercio..."
+              placeholder="Instrucciones o notas para el S-Pet..."
             />
           </div>
 
           <div className="flex items-center justify-end space-x-4">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowAssignModal(false)}
             >
               Cancelar
             </Button>
-            <Button 
-              onClick={handleAssignToBranch}
-              loading={assignToBranchMutation.isPending}
-              disabled={!assignData.branch_id}
+            <Button
+              onClick={handleAssignToCompany}
+              loading={assignToCompanyMutation.isPending}
+              disabled={!assignData.company_id}
               icon={<Building className="h-4 w-4" />}
             >
-              Asignar a Comercio
+              Asignar a S-Pet
             </Button>
           </div>
         </div>

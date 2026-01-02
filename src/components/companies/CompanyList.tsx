@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Building, Heart, MapPin, Phone, Mail, Edit, Trash2, Plus } from 'lucide-react';
+import { Building, Plus } from 'lucide-react';
 import { useCompanies } from '../../hooks/companies/useCompanies';
 import { Company, CompanyType, CompanyStatus } from '../../types/company';
 import { CompanyCard } from './CompanyCard';
@@ -51,9 +51,9 @@ export const CompanyList: React.FC<CompanyListProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Comercios e Instituciones</h2>
+          <h2 className="text-2xl font-bold text-gray-900">S-Pets</h2>
           <p className="text-gray-600 mt-1">
-            Gestiona la red de comercios e instituciones que venden productos AFPets
+            Gestiona la red de veterinarias, refugios y servicios S-Pets
           </p>
         </div>
         {onCreateNew && (
@@ -62,7 +62,7 @@ export const CompanyList: React.FC<CompanyListProps> = ({
             className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Nuevo Comercio
+            Nuevo S-Pet
           </button>
         )}
       </div>
@@ -79,15 +79,15 @@ export const CompanyList: React.FC<CompanyListProps> = ({
         {companies?.length === 0 ? (
           <div className="bg-white rounded-xl shadow-lg p-8 text-center">
             <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay comercios</h3>
-            <p className="text-gray-600 mb-4">Comienza agregando tu primer comercio o institución</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No hay S-Pets registrados</h3>
+            <p className="text-gray-600 mb-4">Comienza agregando tu primer S-Pet</p>
             {onCreateNew && (
               <button
                 onClick={onCreateNew}
                 className="inline-flex items-center px-4 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Agregar Comercio
+                Agregar S-Pet
               </button>
             )}
           </div>
